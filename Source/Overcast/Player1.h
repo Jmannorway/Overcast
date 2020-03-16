@@ -36,11 +36,14 @@ public:
 
 
 	//Called for forward/backward input
-	void MoveForward(float Value);
+	void VerticalMovement(float Value);
 
 	//Called for side to side
-	void MoveRight(float Value);
+	void HorizontalMovement(float Value);
 
+
+	FORCEINLINE	class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 
 };

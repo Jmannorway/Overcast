@@ -6,7 +6,6 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -22,10 +21,21 @@ APlayer1::APlayer1()
 	CameraBoom->TargetArmLength = 1000.f; //camera follows player at this distance
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 2.0f;
+	CameraBoom->bUsePawnControlRotation = true; //Rotate arm based on controller
 
 		//Create follow Camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	//Atach the camera to the end of the boom and let the boom adjust to match
+	// the controller orientation
+	FollowCamera->bUsePawnControlRotation = false;
+
+
+	//Don't rotate when controller rotate
+	//let that just affect camera
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
 
 
 	//Configure character movement 
@@ -60,12 +70,12 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 
 
-	PlayerInputComponent->BindAxis("VerticalMovement", this, &APlayer1::MoveForward);
-	PlayerInputComponent->BindAxis("HorizontalMovement", this, &APlayer1::MoveRight);
+	PlayerInputComponent->BindAxis("VerticalMovement", this, &APlayer1::VerticalMovement);
+	PlayerInputComponent->BindAxis("HorizontalMovement", this, &APlayer1::HorizontalMovement);
 
 }
 
-void APlayer1::MoveForward(float Value)
+void APlayer1::VerticalMovement(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
@@ -76,7 +86,7 @@ void APlayer1::MoveForward(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
-void APlayer1::MoveRight(float Value)
+void APlayer1::HorizontalMovement(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
@@ -87,4 +97,5 @@ void APlayer1::MoveRight(float Value)
 		AddMovementInput(Direction, Value);
 	}
 }
+
 
