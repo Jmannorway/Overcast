@@ -20,7 +20,7 @@ APlayer2::APlayer2()
 
 	SpringArm = CreateDefaultSubobject <USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
-	SpringArm->RelativeRotation = FRotator(-60.f, 0.f, 0.f);
+	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->CameraLagSpeed = 2.0f;
@@ -59,6 +59,7 @@ void APlayer2::Tick(float DeltaTime)
 void APlayer2::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
 
 	PlayerInputComponent->BindAxis(TEXT("HorizontalMovement"), this, &APlayer2::HorizontalMovement);
 
