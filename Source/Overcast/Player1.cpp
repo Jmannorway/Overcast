@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "RainSpell.h"
 
 // Sets default values
 APlayer1::APlayer1()
@@ -67,6 +68,7 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("RainSpell", IE_Pressed, this, &APlayer1::Spell);
 
 
 
@@ -98,4 +100,11 @@ void APlayer1::HorizontalMovement(float Value)
 	}
 }
 
-
+void APlayer1::Spell()
+{
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		World->SpawnActor<ARainSpell>(RainSpellclass, GetActorLocation() + FVector(0.f, -400.f, -10.f), GetActorRotation());
+	}
+}

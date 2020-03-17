@@ -23,6 +23,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<class ARainSpell> RainSpellclass;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -40,6 +43,9 @@ public:
 
 	//Called for side to side
 	void HorizontalMovement(float Value);
+
+	void Spell();
+
 
 
 	FORCEINLINE	class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
