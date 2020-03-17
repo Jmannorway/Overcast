@@ -23,6 +23,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
+
 	UPROPERTY(EditAnywhere)
 		TSubclassOf<class ARainSpell> RainSpellclass;
 

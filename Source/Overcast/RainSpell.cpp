@@ -4,7 +4,9 @@
 #include "RainSpell.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/World.h"
 #include "Player1.h"
+
 
 
 // Sets default values
@@ -19,6 +21,7 @@ ARainSpell::ARainSpell()
 
 	RootComponent = SpellCollider;
 	SpellMesh->SetupAttachment(RootComponent);
+	
 }
 
 // Called when the game starts or when spawned
@@ -39,7 +42,6 @@ void ARainSpell::Overlap(UPrimitiveComponent* Overlapcomp, AActor* OtherActor, U
 {
 	if (OtherActor->IsA(APlayer1::StaticClass()))
 	{
-		OtherActor->Destroy();
 
 		Destroy();
 	}
