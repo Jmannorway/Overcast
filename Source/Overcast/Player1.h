@@ -23,9 +23,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
+	UPROPERTY(EditAnywhere = "Spell")
+		TSubclassOf<class ARainCloud> RainCloudSpell;
 
-	UPROPERTY(EditAnywhere)
-		TSubclassOf<class ARainSpell> RainSpellclass;
+	UPROPERTY(EditAnywhere, Category = "Spell")
+		FVector SpellLocationOffset;
+
+	UPROPERTY(EditAnywhere, Category = "Spell")
+		float SpellAheadOffset;
 
 protected:
 	// Called when the game starts or when spawned

@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "RainSpell.h"
+#include "RainCloud.h"
 
 // Sets default values
 APlayer1::APlayer1()
@@ -18,7 +18,7 @@ APlayer1::APlayer1()
 	//create Camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
+	CameraBoom->SetRelativeRotation(FRotator(-45.f, 0.f, 0.f));
 	CameraBoom->TargetArmLength = 1000.f; //camera follows player at this distance
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 2.0f;
@@ -100,11 +100,15 @@ void APlayer1::HorizontalMovement(float Value)
 	}
 }
 
+// Spawn a raincloud with the desired offset
 void APlayer1::Spell()
 {
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		World->SpawnActor<ARainSpell>(RainSpellclass, GetActorLocation() + FVector(0.f, -400.f, -10.f), GetActorRotation());
-	}
+	FRotator Direction = GetActorRotation();
+
+	// Cast rain cloud spell with offset
+	GetWorld()->SpawnActor<ARainCloud>(
+		RainCloudSpell,
+		GetActorLocation() + Direction.Vector() * SpellAheadOffset + SpellLocationOffset,
+		Direction
+	);
 }
