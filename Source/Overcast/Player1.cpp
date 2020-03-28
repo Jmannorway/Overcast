@@ -14,17 +14,16 @@ APlayer1::APlayer1()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	//create Camera boom
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->SetRelativeRotation(FRotator(-45.f, 0.f, 0.f));
 	CameraBoom->TargetArmLength = 1000.f; //camera follows player at this distance
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 2.0f;
 	CameraBoom->bUsePawnControlRotation = true; //Rotate arm based on controller
 
-		//Create follow Camera
+	//Create follow Camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	//Atach the camera to the end of the boom and let the boom adjust to match
@@ -74,7 +73,6 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAxis("VerticalMovement", this, &APlayer1::VerticalMovement);
 	PlayerInputComponent->BindAxis("HorizontalMovement", this, &APlayer1::HorizontalMovement);
-
 }
 
 void APlayer1::VerticalMovement(float Value)

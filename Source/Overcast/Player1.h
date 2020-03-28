@@ -23,12 +23,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
+	// Configured rain cloud spell BP instance (will probably be replaced by a more intricate spellcasting system some day)
 	UPROPERTY(EditAnywhere = "Spell")
 		TSubclassOf<class ARainCloud> RainCloudSpell;
 
+	// Location offset for spells that create a specific object
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		FVector SpellLocationOffset;
 
+	// How far ahead to of the player to spawn an instance created by a spell
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		float SpellAheadOffset;
 

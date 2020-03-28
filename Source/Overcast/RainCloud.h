@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "RainCloud.generated.h"
 
+class UBoxComponent;
+
 /*
 	made by ya boi. don't steal. i'm proud.
 */
@@ -52,7 +54,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	class UBoxComponent* RainArea;
+	UBoxComponent* RainArea;
 
 public:	
 	// Called every frame
