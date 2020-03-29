@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "EnemyPatrol.generated.h"
 
+class UPathComponent;
+
 UCLASS()
 class OVERCAST_API AEnemyPatrol : public AActor
 {
@@ -19,22 +21,14 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Overriding this in order visually represent path lines in the editor
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	/// Path & anchor variables
+	UPROPERTY(EditAnywhere, Category = "Mesh")
+		UStaticMeshComponent* CharacterMesh;
 
-	// Path anchor points
+	// Path component
 	UPROPERTY(EditAnywhere, Category = "Path")
-		TArray<FVector> Anchors;
-
-	//
-	UPROPERTY(EditAnywhere, Category = "Path")
-		FColor PathColorInEditor;
-
-private:
-	UPROPERTY()
-		class UArrowComponent* PathHelperArrow;
+		UPathComponent* Path;
 
 public:	
 	// Called every frame
