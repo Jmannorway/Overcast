@@ -23,12 +23,17 @@ protected:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	// Character mesh
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 		UStaticMeshComponent* CharacterMesh;
 
 	// Path component
 	UPROPERTY(EditAnywhere, Category = "Path")
 		UPathComponent* Path;
+
+	// Path color
+	UPROPERTY(EditAnywhere, Category = "Path")
+		FColor PathColor;
 
 public:	
 	// Called every frame

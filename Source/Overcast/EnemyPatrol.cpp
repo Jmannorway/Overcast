@@ -14,6 +14,8 @@ AEnemyPatrol::AEnemyPatrol()
 	SetRootComponent(CharacterMesh);
 
 	Path = CreateDefaultSubobject<UPathComponent>("Path");
+
+	PathColor = FColor::Magenta;
 }
 
 // Called when the game starts or when spawned
@@ -27,7 +29,7 @@ void AEnemyPatrol::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	Path->VisualizePath();
+	Path->VisualizePath(PathColor);
 }
 
 // Called every frame
