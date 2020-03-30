@@ -34,19 +34,24 @@ protected:
 		UArrowComponent* VisualizerArrow;
 
 public:	
-	// Get the position of a path anchor
-	UFUNCTION()
-		FVector GetPathAnchor(uint32 Index) const;
-
 	// Get the total number of path anchors
 	UFUNCTION()
 		uint32 GetPathAnchorNumber() const;
+
+	// Get a reference to a path anchor
+	UFUNCTION()
+		ATargetPoint* GetPathAnchor(uint32 Index) const;
+
+	// Get the location of a path anchor
+	UFUNCTION()
+		FVector GetPathAnchorLocation(uint32 Index) const;
+		FVector GetPathAnchorLocation(uint32 Index, float LerpValue) const;
 
 	// Visualize the path
 	virtual void VisualizePath();
 	virtual void VisualizePath(const FColor& Color);
 	virtual void VisualizePath(const FColor& Color, uint32 StartAnchor, float StartAnchorOffset);
-	virtual void VisualizePath(float Offset, EPathVisualizerDirection OffsetDirection, const FColor& Color, uint32 StartAnchor, float StartAnchorOffset, float ArrowOffsetMultiplier = 0.5f);
+	virtual void VisualizePath(float Offset, EPathVisualizerDirection OffsetDirection, const FColor& Color, uint32 StartAnchor, float StartAnchorOffset, float ArrowOffsetMultiplier = 0.4f);
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

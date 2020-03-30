@@ -3,40 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "EnemyPatrol.generated.h"
 
-class UPathComponent;
-
 UCLASS()
-class OVERCAST_API AEnemyPatrol : public AActor
+class OVERCAST_API AEnemyPatrol : public APawn
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
+	// Sets default values for this pawn's properties
 	AEnemyPatrol();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void OnConstruction(const FTransform& Transform) override;
-
-	// Character mesh
-	UPROPERTY(EditAnywhere, Category = "Mesh")
-		UStaticMeshComponent* CharacterMesh;
-
-	// Path component
-	UPROPERTY(EditAnywhere, Category = "Path")
-		UPathComponent* Path;
-
-	// Path color
-	UPROPERTY(EditAnywhere, Category = "Path")
-		FColor PathColor;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };

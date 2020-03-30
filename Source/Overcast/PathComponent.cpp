@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "PathComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Components/ArrowComponent.h"
 #include "Engine/TargetPoint.h"
-#include "PathComponent.h"
 
 #define __VISUALIZER_DEFAULT_OFFSET 128.f
 #define __VISUALIZER_DEFAULT_DIRECTION EPathVisualizerDirection::Up
@@ -31,14 +31,24 @@ void UPathComponent::BeginPlay()
 
 }
 
-FVector UPathComponent::GetPathAnchor(uint32 Index) const
+uint32 UPathComponent::GetPathAnchorNumber() const
+{
+	return Anchors.Num();
+}
+
+ATargetPoint* UPathComponent::GetPathAnchor(uint32 Index) const
+{
+	return Anchors[Index];
+}
+
+FVector UPathComponent::GetPathAnchorLocation(uint32 Index) const
 {
 	return Anchors[Index]->GetActorLocation();
 }
 
-uint32 UPathComponent::GetPathAnchorNumber() const
+FVector UPathComponent::GetPathAnchorLocation(uint32 Index, float LerpValue) const
 {
-	return Anchors.Num();
+	return FMath::Lerp(Anchors[Index]->GetActorLocation(), Anchors[(Index + 1) % Anchors.Num()]->GetActorLocation(), FMath::Frac(LerpValue));
 }
 
 void UPathComponent::VisualizePath()

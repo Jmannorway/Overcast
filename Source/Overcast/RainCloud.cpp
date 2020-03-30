@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "RainCloud.h"
 #include "Components/BoxComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "DrawDebugHelpers.h"
-#include "RainCloud.h"
 
 // Set to false when you want the wet area box to be invisible
 #define __RAIN_AREA_DEBUG true
