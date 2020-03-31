@@ -3,21 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
-#include "EnemyPatrol.generated.h"
+#include "GameFramework/Character.h"
+#include "PatrollingEnemy.generated.h"
 
 UCLASS()
-class OVERCAST_API AEnemyPatrol : public APawn
+class OVERCAST_API APatrollingEnemy : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
-	AEnemyPatrol();
+	// Sets default values for this character's properties
+	APatrollingEnemy();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+		class AAIController* AIController;
 
 public:	
 	// Called every frame

@@ -20,7 +20,7 @@ APlayer2::APlayer2()
 
 	SpringArm = CreateDefaultSubobject <USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
-	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
+	SpringArm->SetRelativeRotation(FRotator(-45.f, 0.f, 0.f));
 	SpringArm->TargetArmLength = 1000.f;
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->CameraLagSpeed = 2.0f;
