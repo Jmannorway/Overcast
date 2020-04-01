@@ -26,10 +26,10 @@ struct FAnchorPoint
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere)
-		uint32 Index;
+		uint8 AnchorIndex;
 
 	UPROPERTY(EditAnywhere)
-		float Offset;
+		float AnchorOffset;
 };
 
 UCLASS()
@@ -48,45 +48,55 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Path anchors
-	UPROPERTY(EditAnywhere, Category = "Path")
-		TArray<ATargetPoint*> Anchor;
-
 	// Does not have functionality yet
 	UPROPERTY(EditAnywhere, Category = "Path")
 		bool bSelfIsFirstAnchor;
+
+	// Path anchors
+	UPROPERTY(EditAnywhere, Category = "Path")
+		TArray<ATargetPoint*> Anchor;
 
 	// Points defined on the path for various uses
 	UPROPERTY(EditAnywhere, Category = "Path")
 		TArray<FAnchorPoint> Point;
 
 	// Path visualization color
-	UPROPERTY(EditAnywhere, Category = "Path")
+	UPROPERTY(EditAnywhere, Category = "Path Visuals")
 		FColor PathColor;
+
+	UPROPERTY(EditAnywhere, Category = "Path Visuals")
+		float PathOffset;
+
+	UPROPERTY(EditAnywhere, Category = "Path Visuals")
+		EPathOffsetDirection PathOffsetDirection;
 
 	UArrowComponent* DirectionalArrow;
 
 public:
-	UFUNCTION(Category = "Path")
-		ATargetPoint* GetAnchor(uint32 Index) const;
 
-	UFUNCTION(Category = "Path")
-		uint32 GetAnchorNumber() const;
+	UFUNCTION(Category = "Path", BlueprintCallable)
+		uint8 GetAnchorNumber() const;
 
-	UFUNCTION(Category = "Path")
-		FVector GetAnchorLocation(uint32 Index) const;
-		FVector GetAnchorLocation(uint32 Index, float Offset) const;
+	UFUNCTION(Category = "Path", BlueprintCallable)
+		uint8 GetNextAnchorIndex(uint8 Index) const;
 
-	UFUNCTION(Category = "Path")
+	UFUNCTION(Category = "Path", BlueprintCallable)
+		FVector GetAnchorLocation(uint8 Index) const;
+		FVector GetAnchorLocation(uint8 Index, float Offset) const;
+
+	UFUNCTION(Category = "Path", BlueprintCallable)
 		void GetAllAnchorLocations(TArray<FVector>& OutArray) const;
 
-	UFUNCTION(Category = "Path")
-		uint32 GetPointNumber() const;
+	UFUNCTION(Category = "Path", BlueprintCallable)
+		uint8 GetPointNumber() const;
 
-	UFUNCTION(Category = "Path")
-		FVector GetPointLocation(uint32 Index) const;
+	UFUNCTION(Category = "Path", BlueprintCallable)
+		uint8 GetPointAnchor(uint8 Index) const;
 
-	virtual void VisualizePath(const FColor& Color = FColor::Magenta, float Offset = 32.f, EPathOffsetDirection OffsetDirection = EPathOffsetDirection::Up, float ArrowOffsetMultiplier = 0.f) const;
+	UFUNCTION(Category = "Path", BlueprintCallable)
+		FVector GetPointLocation(uint8 Index) const;
+
+	virtual void VisualizePath(const FColor& Color = FColor::Magenta, float Offset = 96.f, EPathOffsetDirection OffsetDirection = EPathOffsetDirection::Up, float ArrowOffsetMultiplier = 0.5f) const;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

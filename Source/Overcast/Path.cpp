@@ -15,13 +15,15 @@ APath::APath()
 	DirectionalArrow->SetVisibility(false);
 
 	PathColor = FColor::Magenta;
+	PathOffset = 96.f;
+	PathOffsetDirection = EPathOffsetDirection::Up;
 }
 
 void APath::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	VisualizePath(PathColor);
+	VisualizePath(PathColor, PathOffset, PathOffsetDirection);
 }
 
 // Called when the game starts or when spawned
@@ -29,32 +31,43 @@ void APath::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	uint8 AnchorNumber = GetAnchorNumber();
+
+	// Shrink anchor array to only include valid anchor points
+	for (uint8 i = 0; i < AnchorNumber; i++)
+	{
+		if (!Anchor[i])
+		{
+			Anchor.SetNum(i);
+			break;
+		}
+	}
 }
 
-ATargetPoint* APath::GetAnchor(uint32 Index) const
-{
-	return Anchor[Index];
-}
-
-uint32 APath::GetAnchorNumber() const
+uint8 APath::GetAnchorNumber() const
 {
 	return Anchor.Num();
 }
 
-FVector APath::GetAnchorLocation(uint32 Index) const
+uint8 APath::GetNextAnchorIndex(uint8 Index) const
+{
+	return (Index + 1) % Anchor.Num();
+}
+
+FVector APath::GetAnchorLocation(uint8 Index) const
 {
 	return Anchor[Index]->GetActorLocation();
 }
 
-FVector APath::GetAnchorLocation(uint32 Index, float Offset) const
+FVector APath::GetAnchorLocation(uint8 Index, float Offset) const
 {
-	return FMath::Lerp(Anchor[Index]->GetActorLocation(), Anchor[(Index + 1) % GetAnchorNumber()]->GetActorLocation(), Offset);
+	return FMath::Lerp(Anchor[Index]->GetActorLocation(), Anchor[(Index + 1) % GetAnchorNumber()]->GetActorLocation(), FMath::Clamp(Offset, 0.f, 1.f));
 }
 
 void APath::GetAllAnchorLocations(TArray<FVector>& OutArray) const
 {
-	uint32 PotentialAnchorNumber = Anchor.Num();
-	uint32 ValidAnchorNumber = 0;
+	uint8 PotentialAnchorNumber = Anchor.Num();
+	uint8 ValidAnchorNumber = 0;
 
 	OutArray.Init(FVector::ZeroVector, PotentialAnchorNumber);
 
@@ -65,16 +78,23 @@ void APath::GetAllAnchorLocations(TArray<FVector>& OutArray) const
 	}
 
 	OutArray.SetNum(ValidAnchorNumber);
+
+	//static const long long unsigned int* const THING = new const long long unsigned int;
 }
 
-uint32 APath::GetPointNumber() const
+uint8 APath::GetPointNumber() const
 {
 	return Point.Num();
 }
 
-FVector APath::GetPointLocation(uint32 Index) const
+uint8 APath::GetPointAnchor(uint8 Index) const
 {
-	return GetAnchorLocation(Point[Index].Index, Point[Index].Offset);
+	return Point[Index].AnchorIndex;
+}
+
+FVector APath::GetPointLocation(uint8 Index) const
+{
+	return GetAnchorLocation(Point[Index].AnchorIndex, Point[Index].AnchorOffset);
 }
 
 void APath::VisualizePath(const FColor& Color, float Offset, EPathOffsetDirection OffsetDirection, float ArrowOffsetMultiplier) const
@@ -101,10 +121,10 @@ void APath::VisualizePath(const FColor& Color, float Offset, EPathOffsetDirectio
 	}
 
 	// Get the number of valid anchor points
-	uint32 ValidAnchorNumber = AnchorLocations.Num();
+	uint8 ValidAnchorNumber = AnchorLocations.Num();
 
 	// Offset anchor locations for drawing
-	for (uint32 i = 0; i < ValidAnchorNumber; i++)
+	for (uint8 i = 0; i < ValidAnchorNumber; i++)
 		AnchorLocations[i] += AnchorOffsetVector;
 
 	// Make sure that at least the two first anchor points are valid before drawing the path
@@ -117,7 +137,7 @@ void APath::VisualizePath(const FColor& Color, float Offset, EPathOffsetDirectio
 		DirectionalArrow->SetArrowColor(Color);
 
 		// Draw lines between anchors
-		for (uint32 i = 1; i < ValidAnchorNumber; i++)
+		for (uint8 i = 1; i < ValidAnchorNumber; i++)
 			DrawDebugLine(World, AnchorLocations[i - 1], AnchorLocations[i], Color, true);
 
 		// Draw line between first and last anchor unless the last anchor is the second
@@ -128,7 +148,7 @@ void APath::VisualizePath(const FColor& Color, float Offset, EPathOffsetDirectio
 		for (int i = Point.Num() - 1; i >= 0; i--)
 			DrawDebugSphere(
 				World,
-				FMath::Lerp(AnchorLocations[Point[i].Index % ValidAnchorNumber], AnchorLocations[(Point[i].Index + 1) % ValidAnchorNumber], FMath::Frac(Point[i].Offset)),
+				FMath::Lerp(AnchorLocations[Point[i].AnchorIndex % ValidAnchorNumber], AnchorLocations[(Point[i].AnchorIndex + 1) % ValidAnchorNumber], FMath::Frac(Point[i].AnchorOffset)),
 				16.f,
 				4,
 				Color,
