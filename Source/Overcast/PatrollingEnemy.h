@@ -28,18 +28,36 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Visualize changes in vision
+	// Visualize parameter changes
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	// Path to patrol
+	// Reference to the path to patrol
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		class APath* Path;
 
+	// Index for the starting point on a path
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		uint8 StartingPoint;
 
+	// How far the patrolling enemy can spot the player from
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		float VisionLength;
+
+	// Collision box used for vision
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		class UBoxComponent* VisionBox;
+
+	// The radius of an attack
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		float AttackRadius;
+
+	// How far into the target has to be into the attack radius to be attacked
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		float AttackRadiusUsage;
+
+	// Function to be called when the player overlaps the vision box
+	UFUNCTION()
+		void OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 private:
 
@@ -55,14 +73,12 @@ private:
 	// The path anchor that is currently being moved towards
 	uint8 CurrentPathAnchor;
 
-	// Collision box used for vision
-	class UBoxComponent* VisionBox;
-
 	// Function to used when moving to any point
-	void MoveToLocation(FVector Location);
+	void MoveToTarget(FVector Target);
+	void MoveToTarget(AActor* Target);
 
 	// Set vision box length and offset the location correctly
-	void UpdateVision();
+	void SetVision(float NewVisionLength);
 
 public:	
 	// Called every frame

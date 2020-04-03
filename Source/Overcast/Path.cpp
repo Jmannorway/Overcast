@@ -8,7 +8,7 @@
 // Sets default values
 APath::APath()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 
 	DirectionalArrow = CreateDefaultSubobject<UArrowComponent>("Directional Arrow");

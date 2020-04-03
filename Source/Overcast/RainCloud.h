@@ -6,12 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "RainCloud.generated.h"
 
-class UBoxComponent;
-
-/*
-	made by ya boi. don't steal. i'm proud.
-*/
-
 UCLASS()
 class OVERCAST_API ARainCloud : public AActor
 {
@@ -22,39 +16,25 @@ public:
 	ARainCloud();
 
 protected:
-	// Particle system used for the cloud itself
-	UPROPERTY(EditAnywhere, Category = "Cloud")
-		UParticleSystemComponent* CloudParticles;
-
-	// Movement speed
-	UPROPERTY(EditAnywhere, Category = "Cloud")
-		float CloudSpeed;
-
-	// For how long the cloud will move before disappearing
-	UPROPERTY(EditAnywhere, Category = "Cloud")
-		int32 CloudLife;
-
-	// Particle system used for the rain
-	UPROPERTY(EditAnywhere, Category = "Rain")
-		UParticleSystemComponent* RainParticles;
-
-	// How long the floor is going to stay wet before drying
-	UPROPERTY(EditAnywhere, Category = "Rain")
-		int32 RainLife;
-
-	// How far the rain can reach down
-	UPROPERTY(EditAnywhere, Category = "Rain")
-		float RainReachDepth;
-
-	// The width of the rain area
-	UPROPERTY(EditAnywhere, Category = "Rain")
-		float RainReachWidth;
-
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, Category = "Rain Cloud")
+		int32 CloudLife;
+
+	UPROPERTY(EditAnywhere, Category = "Rain Cloud")
+		float CloudSpeed;
+
+	UPROPERTY(EditAnywhere, Category = "Rain Cloud")
+		class UBoxComponent* WetArea;
+
+	UPROPERTY(EditAnywhere, Category = "Rain Cloud")
+		class UParticleSystemComponent* CloudParticles;
+
 private:
-	UBoxComponent* RainArea;
+
+	// Counter keeping track of how long the cloud has been alive
+	int32 CloudLifeCount;
 
 public:	
 	// Called every frame

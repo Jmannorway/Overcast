@@ -8,7 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 
-#define AI_ACCEPTANCE_RADIUS 24.f
+#define AI_DEFAULT_ACCEPTANCE_RADIUS 24.f
 
 // Sets default values
 APatrollingEnemy::APatrollingEnemy()
@@ -16,7 +16,9 @@ APatrollingEnemy::APatrollingEnemy()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Default status
+	// Default values
+	AttackRadius = 72.f;
+	VisionLength = 500.f;
 	Status = EPatrollingEnemyStatus::Patrolling;
 
 	// Init vision box component
@@ -36,6 +38,7 @@ APatrollingEnemy::APatrollingEnemy()
 // Called when the game starts or when spawned
 void APatrollingEnemy::BeginPlay()
 {
+	// Call overridden function
 	Super::BeginPlay();
 
 	// Validate aicontroller, path, and path anchor number before doing anything
@@ -63,11 +66,14 @@ void APatrollingEnemy::BeginPlay()
 		AnchorLocation = Path->GetAnchorLocation(0);
 
 	// Move to starting point if not already there
-	if (FVector::Distance(GetActorLocation(), AnchorLocation) > AI_ACCEPTANCE_RADIUS)
-		MoveToLocation(AnchorLocation);
+	if (FVector::Distance(GetActorLocation(), AnchorLocation) > AI_DEFAULT_ACCEPTANCE_RADIUS)
+		MoveToTarget(AnchorLocation);
+
+	// Bind delegate with the vision collision box
+	//VisionBox->OnComponentBeginOverlap.AddDynamic(this, &APatrollingEnemy::OnVisionBoxBeginOverlap);
 
 	// Set vision box length correctly
-	UpdateVision();
+	SetVision(VisionLength);
 
 }
 
@@ -75,40 +81,59 @@ void APatrollingEnemy::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	UpdateVision();
+	SetVision(VisionLength);
 }
 
-void APatrollingEnemy::MoveToLocation(FVector Location)
+void APatrollingEnemy::MoveToTarget(FVector Target)
 {
 	FAIMoveRequest Request;
-	Request.SetGoalLocation(Location);
-	Request.SetAcceptanceRadius(24.f);
+	Request.SetGoalLocation(Target);
+	Request.SetAcceptanceRadius(AI_DEFAULT_ACCEPTANCE_RADIUS);
 
 	AIController->MoveTo(Request);
 }
 
-void APatrollingEnemy::UpdateVision()
+void APatrollingEnemy::MoveToTarget(AActor* Target)
+{
+	FAIMoveRequest Request;
+	Request.SetGoalActor(Target);
+	Request.SetAcceptanceRadius(AttackRadius * 0.75f);
+
+	AIController->MoveTo(Request);
+}
+
+void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	FVector TargetLocation = OtherActor->GetActorLocation();
+
+	// Stop current movement before starting the next one
+	AIController->StopMovement();
+
+	if (FVector::Distance(GetActorLocation(), TargetLocation) > AttackRadius * AttackRadiusUsage)
+	{
+		Status = EPatrollingEnemyStatus::Hunting;
+		MoveToTarget(TargetLocation);
+		UE_LOG(LogTemp, Warning, TEXT("Patrolling Enemy: Status -> Hunting"));
+	}
+	else
+	{
+		Status = EPatrollingEnemyStatus::Attacking;
+		UE_LOG(LogTemp, Warning, TEXT("Patrolling Enemy: Status -> Attacking"));
+	}
+}
+
+void APatrollingEnemy::SetVision(float NewVisionLength)
 {
 	// Visualize changes in vision length
 	FVector VisionBoxExtent = VisionBox->GetScaledBoxExtent();
-	FVector VisionBoxLocation = VisionBox->GetRelativeLocation();
-	FVector VisionBoxRotation = GetActorRotation().Vector();
-
-	VisionBoxRotation.Normalize();
-
 	VisionBox->SetBoxExtent({ VisionLength, VisionBoxExtent.Y, VisionBoxExtent.Z });
-	VisionBox->SetRelativeRotation(GetActorRotation());
-	VisionBox->SetRelativeLocation({ VisionBoxRotation * VisionLength });
+	VisionBox->SetRelativeLocation({ VisionLength, 0.f, 0.f });
 }
 
 // Called every frame
 void APatrollingEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// Rotate the vision box to face in the direction that the character is facing
-	UpdateVision();
-	DrawDebugBox(GetWorld(), GetActorLocation() + VisionBox->GetRelativeLocation(), VisionBox->GetScaledBoxExtent(), (FQuat)GetActorRotation(), FColor::White);
 
 	switch (Status)
 	{
@@ -117,7 +142,7 @@ void APatrollingEnemy::Tick(float DeltaTime)
 		if (bIsPatrollingPath && AIController->GetMoveStatus() == EPathFollowingStatus::Idle)
 		{
 			CurrentPathAnchor = Path->GetNextAnchorIndex(CurrentPathAnchor);
-			MoveToLocation(Path->GetAnchorLocation(CurrentPathAnchor));
+			MoveToTarget(Path->GetAnchorLocation(CurrentPathAnchor));
 		}
 		break;
 
