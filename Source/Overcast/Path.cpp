@@ -54,6 +54,11 @@ uint8 APath::GetNextAnchorIndex(uint8 Index) const
 	return (Index + 1) % Anchor.Num();
 }
 
+uint8 APath::GetPreviousAnchorIndex(uint8 Index) const
+{
+	return Index == 0 ? GetAnchorNumber() - 1 : Index - 1;
+}
+
 FVector APath::GetAnchorLocation(uint8 Index) const
 {
 	return Anchor[Index]->GetActorLocation();

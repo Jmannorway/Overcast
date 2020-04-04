@@ -3,9 +3,10 @@
 
 #include "PatrollingEnemy.h"
 #include "DrawDebugHelpers.h"
+#include "Components/BoxComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Path.h"
 #include "AIController.h"
-#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 
 #define AI_DEFAULT_ACCEPTANCE_RADIUS 24.f
@@ -20,6 +21,12 @@ APatrollingEnemy::APatrollingEnemy()
 	AttackRadius = 72.f;
 	VisionLength = 500.f;
 	Status = EPatrollingEnemyStatus::Patrolling;
+	bTargetInView = false;
+	HuntingTimeout = 300;
+
+	// Set movement defaults
+	auto Movement = GetCharacterMovement();
+	Movement->MaxWalkSpeed = 300.f;
 
 	// Init vision box component
 	VisionBox = CreateDefaultSubobject<UBoxComponent>("Vision Box");
@@ -44,7 +51,7 @@ void APatrollingEnemy::BeginPlay()
 	// Validate aicontroller, path, and path anchor number before doing anything
 	AIController = Cast<AAIController>(GetController());
 
-	if (!AIController || !Path || Path->GetAnchorNumber() == 0)
+	if (!AIController || !PatrolPath || PatrolPath->GetAnchorNumber() == 0)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Enemy Patrol: Invalid aicontroller / invalid path / path doesn't have any anchors"));
 		Destroy();
@@ -52,28 +59,29 @@ void APatrollingEnemy::BeginPlay()
 	}
 
 	// Set whether or not patrolling a point or a path
-	bIsPatrollingPath = Path->GetAnchorNumber() > 1;
+	bIsPatrollingPath = PatrolPath->GetAnchorNumber() > 1;
 
 	// Move to starting location if not already there
 	FVector AnchorLocation;
 
-	if (bIsPatrollingPath && StartingPoint < Path->GetPointNumber()) // starting location is a defined point on the path
+	if (bIsPatrollingPath && StartingPoint < PatrolPath->GetPointNumber()) // starting location is a defined point on the path
 	{
-		AnchorLocation = Path->GetPointLocation(StartingPoint);
-		CurrentPathAnchor = Path->GetPointAnchor(StartingPoint);
+		AnchorLocation = PatrolPath->GetPointLocation(StartingPoint);
+		CurrentPathAnchor = PatrolPath->GetPointAnchor(StartingPoint);
 	}
 	else // starting location is the first path anchor
-		AnchorLocation = Path->GetAnchorLocation(0);
+		AnchorLocation = PatrolPath->GetAnchorLocation(0);
 
 	// Move to starting point if not already there
 	if (FVector::Distance(GetActorLocation(), AnchorLocation) > AI_DEFAULT_ACCEPTANCE_RADIUS)
 		MoveToTarget(AnchorLocation);
 
 	// Bind delegate with the vision collision box
-	//VisionBox->OnComponentBeginOverlap.AddDynamic(this, &APatrollingEnemy::OnVisionBoxBeginOverlap);
+	VisionBox->OnComponentBeginOverlap.AddDynamic(this, &APatrollingEnemy::OnVisionBoxBeginOverlap);
+	VisionBox->OnComponentEndOverlap.AddDynamic(this, &APatrollingEnemy::OnVisionBoxEndOverlap);
 
 	// Set vision box length correctly
-	SetVision(VisionLength);
+	UpdateVision(VisionLength);
 
 }
 
@@ -81,14 +89,16 @@ void APatrollingEnemy::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	SetVision(VisionLength);
+	UpdateVision(VisionLength);
+
+	FlushPersistentDebugLines(GetWorld());
+	DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRadius, (int32)AttackRadius / 16, FColor::Yellow, true);
 }
 
 void APatrollingEnemy::MoveToTarget(FVector Target)
 {
 	FAIMoveRequest Request;
-	Request.SetGoalLocation(Target);
-	Request.SetAcceptanceRadius(AI_DEFAULT_ACCEPTANCE_RADIUS);
+	GenerateEnemyMoveRequest(Request, Target);
 
 	AIController->MoveTo(Request);
 }
@@ -96,33 +106,57 @@ void APatrollingEnemy::MoveToTarget(FVector Target)
 void APatrollingEnemy::MoveToTarget(AActor* Target)
 {
 	FAIMoveRequest Request;
-	Request.SetGoalActor(Target);
-	Request.SetAcceptanceRadius(AttackRadius * 0.75f);
+	GenerateEnemyMoveRequest(Request, Target);
 
 	AIController->MoveTo(Request);
 }
 
+void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, FVector Location) const
+{
+	MoveRequest.SetAcceptanceRadius(AI_DEFAULT_ACCEPTANCE_RADIUS);
+	MoveRequest.SetGoalLocation(Location);
+}
+
+void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, AActor* Target) const
+{
+	//MoveRequest.SetAcceptanceRadius(AttackRadius);
+	MoveRequest.SetGoalActor(Target);
+}
+
 void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	FVector TargetLocation = OtherActor->GetActorLocation();
+	FAIMoveRequest Request;
+	GenerateEnemyMoveRequest(Request, OtherActor);
 
-	// Stop current movement before starting the next one
-	AIController->StopMovement();
+	FPathFindingQuery Query;
+	AIController->BuildPathfindingQuery(Request, Query);
 
-	if (FVector::Distance(GetActorLocation(), TargetLocation) > AttackRadius * AttackRadiusUsage)
+	FNavPathSharedPtr Path;
+	AIController->FindPathForMoveRequest(Request, Query, Path);
+
+	// Chase player if nav path points are less than three
+	if (Path && Path->GetPathPoints().Num() < 3)
 	{
-		Status = EPatrollingEnemyStatus::Hunting;
-		MoveToTarget(TargetLocation);
-		UE_LOG(LogTemp, Warning, TEXT("Patrolling Enemy: Status -> Hunting"));
-	}
-	else
-	{
-		Status = EPatrollingEnemyStatus::Attacking;
-		UE_LOG(LogTemp, Warning, TEXT("Patrolling Enemy: Status -> Attacking"));
+		if (Status == EPatrollingEnemyStatus::Patrolling)
+		{
+			AIController->MoveTo(Request);
+			Status = EPatrollingEnemyStatus::Hunting;
+			UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
+			CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
+		}
+		
+		HuntingTimer = 0;
+		bTargetInView = true;
+		TargetActor = OtherActor;
 	}
 }
 
-void APatrollingEnemy::SetVision(float NewVisionLength)
+void APatrollingEnemy::OnVisionBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	bTargetInView = false;
+}
+
+void APatrollingEnemy::UpdateVision(float NewVisionLength)
 {
 	// Visualize changes in vision length
 	FVector VisionBoxExtent = VisionBox->GetScaledBoxExtent();
@@ -135,29 +169,50 @@ void APatrollingEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Make sure not to reference a non-exising actor
+	if (TargetActor != nullptr && (TargetActor->IsPendingKill() || Status == EPatrollingEnemyStatus::Patrolling))
+	{
+		TargetActor = nullptr;
+		Status = EPatrollingEnemyStatus::Patrolling;
+	}
+
+	// Increment the hunting timer
+	HuntingTimer += !bTargetInView;
+
 	switch (Status)
 	{
 	case EPatrollingEnemyStatus::Patrolling:
 		// Start moving towards the next point if not moving
 		if (bIsPatrollingPath && AIController->GetMoveStatus() == EPathFollowingStatus::Idle)
 		{
-			CurrentPathAnchor = Path->GetNextAnchorIndex(CurrentPathAnchor);
-			MoveToTarget(Path->GetAnchorLocation(CurrentPathAnchor));
+			CurrentPathAnchor = PatrolPath->GetNextAnchorIndex(CurrentPathAnchor);
+			MoveToTarget(PatrolPath->GetAnchorLocation(CurrentPathAnchor));
 		}
 		break;
 
 	case EPatrollingEnemyStatus::Hunting:
+
+		UE_LOG(LogTemp, Warning, TEXT("HuntingTimer = %i"), HuntingTimer);
+
+		if (FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation()) < AttackRadius)
+		{
+			Status = EPatrollingEnemyStatus::Attacking;
+			AIController->StopMovement();
+			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You were hit!"));
+			bTargetInView = false;
+		}
+		else if (HuntingTimer > HuntingTimeout)
+		{
+			Status = EPatrollingEnemyStatus::Patrolling;
+			AIController->StopMovement();
+			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You escaped!"));
+			bTargetInView = false;
+		}
+
 		break;
 
 	case EPatrollingEnemyStatus::Attacking:
 		break;
 	}
-}
-
-// Called to bind functionality to input
-void APatrollingEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 

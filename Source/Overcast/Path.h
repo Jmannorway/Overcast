@@ -81,6 +81,9 @@ public:
 		uint8 GetNextAnchorIndex(uint8 Index) const;
 
 	UFUNCTION(Category = "Path", BlueprintCallable)
+		uint8 GetPreviousAnchorIndex(uint8 Index) const;
+
+	UFUNCTION(Category = "Path", BlueprintCallable)
 		FVector GetAnchorLocation(uint8 Index) const;
 		FVector GetAnchorLocation(uint8 Index, float Offset) const;
 

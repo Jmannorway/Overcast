@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "PatrollingEnemy.generated.h"
 
+struct FAIMoveRequest;
+
 UENUM(BlueprintType)
 enum class EPatrollingEnemyStatus : uint8
 {
@@ -33,7 +35,7 @@ protected:
 
 	// Reference to the path to patrol
 	UPROPERTY(EditAnywhere, Category = "Patrol")
-		class APath* Path;
+		class APath* PatrolPath;
 
 	// Index for the starting point on a path
 	UPROPERTY(EditAnywhere, Category = "Patrol")
@@ -47,21 +49,28 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		class UBoxComponent* VisionBox;
 
-	// The radius of an attack
+	// For how long the enemy can chase the player without seeing them
 	UPROPERTY(EditAnywhere, Category = "Patrol")
+		int32 HuntingTimeout;
+
+	// The radius of the wielded weapon
+	UPROPERTY(EditAnywhere, Category = "Attack")
+		float WeaponRadius;
+
+	// The radius of an attack
+	UPROPERTY(EditAnywhere, Category = "Attack")
 		float AttackRadius;
 
-	// How far into the target has to be into the attack radius to be attacked
-	UPROPERTY(EditAnywhere, Category = "Patrol")
-		float AttackRadiusUsage;
-
-	// Function to be called when the player overlaps the vision box
+	// Functions to be called to check if the player has been seen or not
 	UFUNCTION()
 		void OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+		void OnVisionBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 private:
 
-	// Controller to move this character to various targets
+	// Controller to handle AI movement
 	class AAIController* AIController;
 
 	// Keeping track of the current action
@@ -73,18 +82,28 @@ private:
 	// The path anchor that is currently being moved towards
 	uint8 CurrentPathAnchor;
 
-	// Function to used when moving to any point
+	// A reference to the hunted target
+	AActor* TargetActor;
+
+	// Variable set by vision box overlap functions
+	bool bTargetInView;
+
+	// Variable that times the hunting timeout
+	int32 HuntingTimer;
+
+	// Functions to used when moving to any point
 	void MoveToTarget(FVector Target);
 	void MoveToTarget(AActor* Target);
 
+	// Subfunctions to be called when getting a move request
+	void GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, FVector Location) const;
+	void GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, AActor* Target) const;
+
 	// Set vision box length and offset the location correctly
-	void SetVision(float NewVisionLength);
+	void UpdateVision(float NewVisionLength);
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };
