@@ -3,17 +3,25 @@
 #include "Path.h"
 #include "DrawDebugHelpers.h"
 #include "Components/ArrowComponent.h"
+#include "Components/BillboardComponent.h"
 #include "Engine/TargetPoint.h"
 
 // Sets default values
 APath::APath()
 {
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 
+	// Path visuals sprite component setup
+#if WITH_EDITORONLY_DATA
 	DirectionalArrow = CreateDefaultSubobject<UArrowComponent>("Directional Arrow");
 	DirectionalArrow->SetVisibility(false);
 
+	SpriteComponent = CreateEditorOnlyDefaultSubobject<UBillboardComponent>("Sprite");
+	SetRootComponent(SpriteComponent);
+#endif
+
+	// Path visuals defaults
 	PathColor = FColor::Magenta;
 	PathOffset = 96.f;
 	PathOffsetDirection = EPathOffsetDirection::Up;
@@ -42,6 +50,13 @@ void APath::BeginPlay()
 			break;
 		}
 	}
+}
+
+void APath::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	FlushPersistentDebugLines(GetWorld());
 }
 
 uint8 APath::GetAnchorNumber() const

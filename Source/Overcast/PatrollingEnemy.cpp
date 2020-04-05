@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Path.h"
+#include "Player1.h"
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
 
@@ -125,29 +126,34 @@ void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, AAc
 
 void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	FAIMoveRequest Request;
-	GenerateEnemyMoveRequest(Request, OtherActor);
+	class APlayer1* Player = Cast<APlayer1>(OtherActor);
 
-	FPathFindingQuery Query;
-	AIController->BuildPathfindingQuery(Request, Query);
-
-	FNavPathSharedPtr Path;
-	AIController->FindPathForMoveRequest(Request, Query, Path);
-
-	// Chase player if nav path points are less than three
-	if (Path && Path->GetPathPoints().Num() < 3)
+	if (Player)
 	{
-		if (Status == EPatrollingEnemyStatus::Patrolling)
+		FAIMoveRequest Request;
+		GenerateEnemyMoveRequest(Request, OtherActor);
+
+		FPathFindingQuery Query;
+		AIController->BuildPathfindingQuery(Request, Query);
+
+		FNavPathSharedPtr Path;
+		AIController->FindPathForMoveRequest(Request, Query, Path);
+
+		// Chase player if nav path points are less than three
+		if (Path && Path->GetPathPoints().Num() < 3)
 		{
-			AIController->MoveTo(Request);
-			Status = EPatrollingEnemyStatus::Hunting;
-			UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
-			CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
+			if (Status == EPatrollingEnemyStatus::Patrolling)
+			{
+				AIController->MoveTo(Request);
+				Status = EPatrollingEnemyStatus::Hunting;
+				UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
+				CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
+			}
+
+			HuntingTimer = 0;
+			bTargetInView = true;
+			TargetActor = OtherActor;
 		}
-		
-		HuntingTimer = 0;
-		bTargetInView = true;
-		TargetActor = OtherActor;
 	}
 }
 

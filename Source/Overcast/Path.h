@@ -48,6 +48,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	// Does not have functionality yet
 	UPROPERTY(EditAnywhere, Category = "Path")
 		bool bSelfIsFirstAnchor;
@@ -69,6 +71,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Path Visuals")
 		EPathOffsetDirection PathOffsetDirection;
+
+	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "Path Visuals")
+		class UBillboardComponent* SpriteComponent;
 
 	UArrowComponent* DirectionalArrow;
 
