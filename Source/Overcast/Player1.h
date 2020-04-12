@@ -55,6 +55,10 @@ public:
 
 	void Spell();
 
+	void Slide();
+
+	void StopSlide();
+
 
 
 	FORCEINLINE	class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

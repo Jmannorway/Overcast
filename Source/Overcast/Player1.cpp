@@ -43,6 +43,7 @@ APlayer1::APlayer1()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 850.f;
 	GetCharacterMovement()->AirControl = 0.5f;
+	GetCharacterMovement()->MaxWalkSpeed = 900.f;
 }
 
 // Called when the game starts or when spawned
@@ -68,7 +69,9 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAction("RainSpell", IE_Pressed, this, &APlayer1::Spell);
-
+	PlayerInputComponent->BindAction("Slide", IE_Pressed, this, &APlayer1::Slide);
+	PlayerInputComponent->BindAction("Slide", IE_Released, this, &APlayer1::StopSlide);
+	
 
 
 	PlayerInputComponent->BindAxis("VerticalMovement", this, &APlayer1::VerticalMovement);
@@ -109,4 +112,18 @@ void APlayer1::Spell()
 		GetActorLocation() + Direction.Vector() * SpellAheadOffset + SpellLocationOffset,
 		Direction
 	);
+}
+
+void APlayer1::Slide()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 900.f;
+
+
+}
+
+void APlayer1::StopSlide()
+{
+
+	GetCharacterMovement()->MaxWalkSpeed = 600.f;
+
 }
