@@ -35,6 +35,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		float SpellAheadOffset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSubclassOf<APlayer1> PlayerSpawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool Destroyed;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -30,5 +30,7 @@ void UPlayerAnimInstance::UpdateAnimationProperties()
 
 		bIsInAir = Pawn->GetMovementComponent()->IsFalling();
 	}
+
+	
 }
 

@@ -29,6 +29,9 @@ public:
 		bool bIsInAir;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+		bool bIsSliding;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 		class APawn* Pawn;
 	
 };

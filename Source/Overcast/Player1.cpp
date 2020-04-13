@@ -8,6 +8,9 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "RainCloud.h"
+#include "GameFramework/Actor.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameplayTask.h"
 
 // Sets default values
 APlayer1::APlayer1()
@@ -43,7 +46,7 @@ APlayer1::APlayer1()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 850.f;
 	GetCharacterMovement()->AirControl = 0.5f;
-	GetCharacterMovement()->MaxWalkSpeed = 900.f;
+	
 }
 
 // Called when the game starts or when spawned
@@ -57,6 +60,17 @@ void APlayer1::BeginPlay()
 void APlayer1::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	
+	
+	if (Destroyed == true)
+	{
+
+		UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+		UE_LOG(LogTemp, Warning, TEXT("This is running like it should"));
+	}
+
+	
 
 }
 
