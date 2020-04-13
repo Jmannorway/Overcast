@@ -39,7 +39,11 @@ public:
 		TSubclassOf<APlayer1> PlayerSpawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool Destroyed;
+		bool PlayerDestroyed;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		int32 DeathCon;
+	
 
 protected:
 	// Called when the game starts or when spawned

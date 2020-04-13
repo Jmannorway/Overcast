@@ -6,6 +6,9 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Actor.h"
+#include "Player1.h"
 
 // Sets default values
 APlayer2::APlayer2()
@@ -17,24 +20,7 @@ APlayer2::APlayer2()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	MeshComponent->SetupAttachment(GetRootComponent());
 
-
-	SpringArm = CreateDefaultSubobject <USpringArmComponent>(TEXT("SpringArm"));
-	SpringArm->SetupAttachment(GetRootComponent());
-	SpringArm->SetRelativeRotation(FRotator(-45.f, 0.f, 0.f));
-	SpringArm->TargetArmLength = 1000.f;
-	SpringArm->bEnableCameraLag = true;
-	SpringArm->CameraLagSpeed = 2.0f;
-
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-
-
-
-
-	Velocity = FVector(0.f);
-	MaxSpeed = 600.f;
-
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	
 
 }
 
@@ -50,8 +36,7 @@ void APlayer2::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	FVector Newlocation = GetActorLocation() + (Velocity * DeltaTime);
-	SetActorLocation(Newlocation);
+	
 
 }
 
@@ -61,19 +46,13 @@ void APlayer2::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 
-	PlayerInputComponent->BindAxis(TEXT("HorizontalMovement"), this, &APlayer2::HorizontalMovement);
-
-	PlayerInputComponent->BindAxis(TEXT("VerticalMovement"), this, &APlayer2::VerticalMovement);
-
 }
 
-void APlayer2::HorizontalMovement(float input)
+/*void APlayer2::Restart()
 {
-	Velocity.X = FMath::Clamp(input, -1.f, 1.f) * MaxSpeed;
-}
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+	UE_LOG(LogTemp, Warning, TEXT("This is running like it should"));
+	exit;
 
-void APlayer2::VerticalMovement(float input)
-{
-	Velocity.Y = FMath::Clamp(input, -1.f, 1.f) * MaxSpeed;
-}
+}*/
 

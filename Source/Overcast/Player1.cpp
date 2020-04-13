@@ -11,6 +11,7 @@
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameplayTask.h"
+#include "Player2.h"
 
 // Sets default values
 APlayer1::APlayer1()
@@ -41,11 +42,13 @@ APlayer1::APlayer1()
 	bUseControllerRotationRoll = false;
 
 
+
 	//Configure character movement 
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 850.f;
 	GetCharacterMovement()->AirControl = 0.5f;
+	
 	
 }
 
@@ -61,16 +64,16 @@ void APlayer1::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	
-	
-	if (Destroyed == true)
-	{
+	//IsPendingKill();
+ 
 
-		UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
-		UE_LOG(LogTemp, Warning, TEXT("This is running like it should"));
-	}
+	//if (IsPendingKill())
+	//{
+		
+	//	Restart(PlayerDestroyed);
+	//	PlayerDestroyed = false;
+	//}
 
-	
 
 }
 
