@@ -41,6 +41,56 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool Destroyed;
 
+	/*
+		The action sphere is the radius in which the player can interact with things
+		such as pushable boxes, pickups and, friendly characters
+	*/
+
+	UPROPERTY(EditAnywhere, Category = "Action Sphere")
+		class USphereComponent* ActionSphere;
+
+	UFUNCTION()
+		void OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+		void ActionPressed();
+
+	UFUNCTION()
+		void ActionReleased();
+
+	/*
+		Variables and functions to interact with pushable boxes
+	*/
+
+	bool bCanPushBox;
+
+	bool bIsPushingBox;
+
+	class APushableBox* PushableBox;
+
+	/*
+		Variables and functions to handle player axis constraint
+	*/
+
+	FVector MovementConstraintVector;
+
+	void AddMovementConstraints();
+	void AddMovementConstraints(bool X, bool Y, bool Z);
+
+	void RemoveMovementConstraints();
+	void RemoveMovementConstraints(bool X, bool Y, bool Z);
+
+	FVector GetMovementConstaints() const;
+
+	/*
+		Other variables
+	*/
+
+	FVector PreviousLocation;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

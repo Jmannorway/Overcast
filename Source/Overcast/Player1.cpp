@@ -10,6 +10,9 @@
 #include "RainCloud.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
+#include "GameFramework/MovementComponent.h"
+#include "PushableBox.h"
 #include "GameplayTask.h"
 
 // Sets default values
@@ -47,13 +50,97 @@ APlayer1::APlayer1()
 	GetCharacterMovement()->JumpZVelocity = 850.f;
 	GetCharacterMovement()->AirControl = 0.5f;
 	
+
+	// Configure action sphere
+	ActionSphere = CreateDefaultSubobject<USphereComponent>("ActionSphere");
+	ActionSphere->SetupAttachment(RootComponent);
+	ActionSphere->InitSphereRadius(72.f);
+
+
+	// Pushable box default values
+	bCanPushBox = false;
+	bIsPushingBox = false;
+
+
+	// Unfreeze player
+	RemoveMovementConstraints();
 }
+
+void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (Cast<APushableBox>(OtherActor))
+	{
+		// Get pointer to the pushable box in question
+		PushableBox = CastChecked <APushableBox>(OtherActor);
+		bCanPushBox = true;
+	}
+}
+
+void APlayer1::OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor == PushableBox)
+	{
+		PushableBox = nullptr;
+		bCanPushBox = false;
+	}
+}
+
+void APlayer1::ActionPressed()
+{
+	if (PushableBox)
+	{
+		bIsPushingBox = true;
+		AddMovementConstraints(true, false, false);
+	}
+}
+
+void APlayer1::ActionReleased()
+{
+	if (PushableBox)
+	{
+		RemoveMovementConstraints();
+		bIsPushingBox = false;
+	}
+}
+
+void APlayer1::AddMovementConstraints()
+{
+	MovementConstraintVector = FVector(0.f, 0.f, 0.f);
+}
+
+void APlayer1::AddMovementConstraints(bool X, bool Y, bool Z)
+{
+	if (X) MovementConstraintVector.X = 0.f;
+	if (Y) MovementConstraintVector.Y = 0.f;
+	if (Z) MovementConstraintVector.Z = 0.f;
+}
+
+void APlayer1::RemoveMovementConstraints()
+{
+	MovementConstraintVector = FVector(1.f, 1.f, 1.f);
+}
+
+void APlayer1::RemoveMovementConstraints(bool X, bool Y, bool Z)
+{
+	if (X) MovementConstraintVector.X = 1.f;
+	if (Y) MovementConstraintVector.Y = 1.f;
+	if (Z) MovementConstraintVector.Z = 1.f;
+}
+
+FVector APlayer1::GetMovementConstaints() const
+{
+	return MovementConstraintVector;
+}
+
+
 
 // Called when the game starts or when spawned
 void APlayer1::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
+	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 }
 
 // Called every frame
@@ -70,8 +157,12 @@ void APlayer1::Tick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("This is running like it should"));
 	}
 
-	
+	if (bIsPushingBox && PushableBox)
+	{
+		PushableBox->AddActorLocalOffset(PreviousLocation - GetActorLocation());
+	}
 
+	PreviousLocation = GetActorLocation();
 }
 
 // Called to bind functionality to input
@@ -86,8 +177,7 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Slide", IE_Pressed, this, &APlayer1::Slide);
 	PlayerInputComponent->BindAction("Slide", IE_Released, this, &APlayer1::StopSlide);
 	
-
-
+	
 	PlayerInputComponent->BindAxis("VerticalMovement", this, &APlayer1::VerticalMovement);
 	PlayerInputComponent->BindAxis("HorizontalMovement", this, &APlayer1::HorizontalMovement);
 }
@@ -100,7 +190,7 @@ void APlayer1::VerticalMovement(float Value)
 		const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
+		AddMovementInput(Direction * MovementConstraintVector, Value);
 	}
 }
 void APlayer1::HorizontalMovement(float Value)
@@ -111,7 +201,7 @@ void APlayer1::HorizontalMovement(float Value)
 		const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(Direction, Value);
+		AddMovementInput(Direction * MovementConstraintVector, Value);
 	}
 }
 
