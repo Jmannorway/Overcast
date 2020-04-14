@@ -29,22 +29,16 @@ public:
 	UPROPERTY(EditAnywhere)
 		class UStaticMeshComponent* MeshComponent;
 
-	UPROPERTY(EditAnywhere)
-		class UCameraComponent* Camera;
-
-	UPROPERTY(EditAnywhere)
-		class USpringArmComponent* SpringArm;
-
 	UPROPERTY(EditAnywhere, Category = "Pawn Movement")
 		float MaxSpeed;
 
+	UPROPERTY(EditAnywhere)
+		bool PlayerDead;
+
+	//void Restart();
 	
 
 private:
-
-	void HorizontalMovement(float input);
-
-	void VerticalMovement(float input);
 
 	FVector Velocity;
 
