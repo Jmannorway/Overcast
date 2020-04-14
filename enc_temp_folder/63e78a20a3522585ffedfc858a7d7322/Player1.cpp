@@ -104,8 +104,6 @@ void APlayer1::ActionPressed()
 			SetAxisConstraint(EMovementConstraintAxis::Y);
 		else
 			SetAxisConstraint(EMovementConstraintAxis::X);
-
-		GetCharacterMovement()->MaxWalkSpeed = 450.f;
 	}
 }
 
@@ -115,7 +113,6 @@ void APlayer1::ActionReleased()
 	{
 		bIsPushingBox = false;
 		RemoveAxisConstraint();
-		GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	}
 }
 

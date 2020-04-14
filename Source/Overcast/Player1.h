@@ -6,6 +6,14 @@
 #include "GameFramework/Character.h"
 #include "Player1.generated.h"
 
+UENUM(BlueprintType)
+enum class EMovementConstraintAxis : uint8
+{
+	X	UMETA(DisplayName = "X"),
+	Y	UMETA(DisplayName = "Y"),
+	Z	UMETA(DisplayName = "Z")
+};
+
 UCLASS()
 class OVERCAST_API APlayer1 : public ACharacter
 {
@@ -81,19 +89,17 @@ public:
 
 	FVector MovementConstraintVector;
 
-	void AddMovementConstraints();
-	void AddMovementConstraints(bool X, bool Y, bool Z);
-
-	void RemoveMovementConstraints();
-	void RemoveMovementConstraints(bool X, bool Y, bool Z);
-
-	FVector GetMovementConstaints() const;
+	void SetAxisConstraint(EMovementConstraintAxis Axis);
+	FVector GetAxisConstraint() const;
+	void RemoveAxisConstraint();
 
 	/*
-		Other variables
+		Other variables & functions
 	*/
 
 	FVector PreviousLocation;
+
+	void ReportOnStuff();
 
 protected:
 	// Called when the game starts or when spawned
