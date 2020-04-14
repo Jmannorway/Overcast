@@ -39,7 +39,11 @@ public:
 		TSubclassOf<APlayer1> PlayerSpawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool Destroyed;
+		bool PlayerDestroyed;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		int32 DeathCon;
+	
 
 	/*
 		The action sphere is the radius in which the player can interact with things
