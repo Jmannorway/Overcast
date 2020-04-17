@@ -2,7 +2,6 @@
 
 
 #include "Player1.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
@@ -16,7 +15,9 @@
 #include "GameplayTask.h"
 #include "UObject/Object.h"
 #include "Player2.h"
-#include "Math/Axis.h"
+#include "Engine/EngineTypes.h"
+#include "LensmanSpringArmComponent.h"
+#include "CameraTrigger.h"
 
 // Sets default values
 APlayer1::APlayer1()
@@ -24,21 +25,18 @@ APlayer1::APlayer1()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	//create Camera boom
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->TargetArmLength = 1000.f; //camera follows player at this distance
-	CameraBoom->bEnableCameraLag = true;
-	CameraBoom->CameraLagSpeed = 2.0f;
-	CameraBoom->bUsePawnControlRotation = true; //Rotate arm based on controller
+	
+	
+	// Set spring arm
+	CameraArm = CreateDefaultSubobject<ULensmanSpringArmComponent>("SpringArm");
+	CameraArm->TargetArmLength = 1000.f; //camera follows player at this distance
+	CameraArm->bEnableCameraLag = true;
+	CameraArm->CameraLagSpeed = 2.0f;
+	CameraArm->SetupAttachment(RootComponent);
 
-	//Create follow Camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	//Atach the camera to the end of the boom and let the boom adjust to match
-	// the controller orientation
-	FollowCamera->bUsePawnControlRotation = false;
-
+	// Set camera
+	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
+	Camera->SetupAttachment(CameraArm);
 
 	//Don't rotate when controller rotate
 	//let that just affect camera
@@ -68,6 +66,30 @@ APlayer1::APlayer1()
 
 	// Unfreeze player
 	MovementConstraintVector = FVector(1.f, 1.f, 1.f);
+}
+
+// Called when the game starts or when spawned
+void APlayer1::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OnActorBeginOverlap.AddDynamic(this, &APlayer1::OnBeginOverlap);
+	OnActorEndOverlap.AddDynamic(this, &APlayer1::OnEndOverlap);
+
+	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
+	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
+}
+
+void APlayer1::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	if (ACameraTrigger* CameraTrigger = Cast<ACameraTrigger>(OtherActor))
+	{
+		CameraArm->SetCameraPosition(CameraTrigger->NewShot, CameraTrigger->ShotInstruction, CameraTrigger->TransitionLength);
+	}
+}
+
+void APlayer1::OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
 }
 
 void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -142,15 +164,6 @@ void APlayer1::RemoveAxisConstraint()
 void APlayer1::ReportOnStuff()
 {
 	UE_LOG(LogTemp, Warning, TEXT("CanMoveBox: %d\nMovingBox: %d\nBoxPointer: %X"), bCanPushBox, bIsPushingBox, PushableBox);
-}
-
-// Called when the game starts or when spawned
-void APlayer1::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
-	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 }
 
 // Called every frame

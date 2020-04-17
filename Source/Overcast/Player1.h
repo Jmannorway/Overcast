@@ -23,16 +23,21 @@ public:
 	// Sets default values for this character's properties
 	APlayer1();
 
+protected:
+
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 	//Camera boom behind player
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* CameraBoom;
+		class ULensmanSpringArmComponent* CameraArm;
 
 	//Follow Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class UCameraComponent* FollowCamera;
+		class UCameraComponent* Camera;
 
 	// Configured rain cloud spell BP instance (will probably be replaced by a more intricate spellcasting system some day)
-	UPROPERTY(EditAnywhere = "Spell")
+	UPROPERTY(EditAnywhere, Category = "Spell")
 		TSubclassOf<class ARainCloud> RainCloudSpell;
 
 	// Location offset for spells that create a specific object
@@ -51,6 +56,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		int32 DeathCon;
+
+	UFUNCTION()
+		void OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
+
+	UFUNCTION()
+		void OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
 	
 
 	/*
@@ -101,11 +112,8 @@ public:
 
 	void ReportOnStuff();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+public:
 
-public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -125,10 +133,6 @@ public:
 
 	void StopSlide();
 
-
-
-	FORCEINLINE	class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
-
+	FORCEINLINE UCameraComponent* GetCameraComponent() const { return Camera; }
+	FORCEINLINE ULensmanSpringArmComponent* GetSpringArmComponent() const { return CameraArm; }
 };
