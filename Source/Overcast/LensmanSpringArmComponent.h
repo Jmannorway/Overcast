@@ -25,16 +25,17 @@ struct FShot
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(EditAnywhere) float ShotDistance;
-	UPROPERTY(EditAnywhere) FRotator ShotRotation;
-	UPROPERTY(EditAnywhere) FVector ShotLocation;
+	UPROPERTY(EditAnywhere) float Distance;
+	UPROPERTY(EditAnywhere) FRotator Rotation;
+	UPROPERTY(EditAnywhere) FVector Offset;
+	UPROPERTY(EditAnywhere) EShotInstruction Instruction;
+	UPROPERTY(EditAnywhere) float Duration;
 
-	void Set(float Distance, FRotator Rotation, FVector Location);
+	void Set(float Distance, FRotator Rotation, FVector Location, EShotInstruction ShotInstruction, float ShotDuration);
 
-	FShot() { ; }
+	FShot();
 	FShot(const FShot& Shot);
-	FShot(float Distance, FRotator Rotation, FVector Location);
-	FShot(float&& Distance, FRotator&& Rotation, FVector&& Location);
+	FShot(float ShotDistance, FRotator ShotRotation, FVector ShotOffset, EShotInstruction ShotInstruction, float ShotDuration);
 };
 
 UCLASS()
@@ -53,11 +54,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Cinematography")
 		FShot DefaultShot;
 
-	UPROPERTY(EditAnywhere, Category = "Cinematography")
-		FShot NextShot;
+	FShot NextShot;
 
-	UPROPERTY(EditAnywhere, Category = "Cinematography")
-		FShot PreviousShot;
+	FShot PreviousShot;
 
 private:
 
@@ -81,14 +80,16 @@ private:
 	float InverseExponentialCurve(float val);
 
 	// Instruction time variables
-	float ShotTime;
-	float ShotLength;
+	float CurrentShotTime;
 
 public:
 
 	// Asks the LensmanSpringArmComponent to change camera position
 	UFUNCTION(BlueprintCallable, Category = "Cinematography")
-		void SetCameraPosition(const FShot& NewShot, EShotInstruction InstructionName, float Length);
+		void SetCameraPosition(const FShot& NewShot);
+
+	UFUNCTION(BlueprintCallable, Category = "Cinematography")
+		void SetDefaultCameraPosition();
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

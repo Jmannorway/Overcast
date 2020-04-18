@@ -105,6 +105,12 @@ protected:
 	void RemoveAxisConstraint();
 
 	/*
+		Camera trigger reference to keep track
+	*/
+
+	class ACameraTrigger* CameraTrigger;
+
+	/*
 		Other variables & functions
 	*/
 

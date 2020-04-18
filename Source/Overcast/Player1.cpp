@@ -66,13 +66,9 @@ APlayer1::APlayer1()
 
 	// Unfreeze player
 	MovementConstraintVector = FVector(1.f, 1.f, 1.f);
-}
 
-// Called when the game starts or when spawned
-void APlayer1::BeginPlay()
-{
-	Super::BeginPlay();
 
+	// Bind overlap functions
 	OnActorBeginOverlap.AddDynamic(this, &APlayer1::OnBeginOverlap);
 	OnActorEndOverlap.AddDynamic(this, &APlayer1::OnEndOverlap);
 
@@ -80,16 +76,40 @@ void APlayer1::BeginPlay()
 	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 }
 
+// Called when the game starts or when spawned
+void APlayer1::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void APlayer1::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
-	if (ACameraTrigger* CameraTrigger = Cast<ACameraTrigger>(OtherActor))
+	CameraTrigger = Cast<ACameraTrigger>(OtherActor);
+
+	if (CameraTrigger)
 	{
-		CameraArm->SetCameraPosition(CameraTrigger->NewShot, CameraTrigger->ShotInstruction, CameraTrigger->TransitionLength);
+		ECameraTriggerReaction Reaction = CameraTrigger->GetInsideReaction();
+
+		if (Reaction == ECameraTriggerReaction::Default)
+			CameraArm->SetDefaultCameraPosition();
+		else if (Reaction == ECameraTriggerReaction::Custom)
+			CameraArm->SetCameraPosition(CameraTrigger->GetInsideShot());
 	}
 }
 
 void APlayer1::OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
+	if (CameraTrigger)
+	{
+		ECameraTriggerReaction Reaction = CameraTrigger->GetOutsideReaction();
+
+		if (Reaction == ECameraTriggerReaction::Default)
+			CameraArm->SetDefaultCameraPosition();
+		else if (Reaction == ECameraTriggerReaction::Custom)
+			CameraArm->SetCameraPosition(CameraTrigger->GetOutsideShot());
+		
+		CameraTrigger = nullptr;
+	}
 }
 
 void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

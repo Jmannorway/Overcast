@@ -2,6 +2,7 @@
 
 
 #include "LensmanSpringArmComponent.h"
+#include "CameraTrigger.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
@@ -11,23 +12,21 @@ ULensmanSpringArmComponent::ULensmanSpringArmComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// Set inherited spring arm parameters
+	// Set inherited spring arm variables
 	bInheritPitch = false;
 	bInheritRoll = false;
 	bInheritYaw = false;
 
 	// Initialize hidden variables
 	bChangingShot = false;
-
-	ShotLength = 0.f;
-	ShotTime = 0.f;
+	CurrentShotTime = 0.f;
 }
 
-void ULensmanSpringArmComponent::SetCameraPosition(const FShot& NewShot, EShotInstruction InstructionName, float Length)
+void ULensmanSpringArmComponent::SetCameraPosition(const FShot& NewShot)
 {
 	NextShot = NewShot;
 
-	switch (InstructionName)
+	switch (NextShot.Instruction)
 	{
 	case EShotInstruction::None: Curve = &ULensmanSpringArmComponent::NoCurve; break;
 	case EShotInstruction::Smooth: Curve = &ULensmanSpringArmComponent::SmoothCurve; break;
@@ -35,15 +34,19 @@ void ULensmanSpringArmComponent::SetCameraPosition(const FShot& NewShot, EShotIn
 	case EShotInstruction::InvExp: Curve = &ULensmanSpringArmComponent::InverseExponentialCurve; break;
 	}
 
-	ShotLength = Length;
-	ShotTime = 0.f;
+	CurrentShotTime = 0.f;
 
 	bChangingShot = true;
 }
 
+void ULensmanSpringArmComponent::SetDefaultCameraPosition()
+{
+	SetCameraPosition(DefaultShot);
+}
+
 void ULensmanSpringArmComponent::BeginPlay()
 {
-	DefaultShot.Set(TargetArmLength, GetRelativeRotation(), GetRelativeLocation());
+	DefaultShot.Set(TargetArmLength, GetRelativeRotation(), GetRelativeLocation(), DefaultShot.Instruction, 1.f);
 	PreviousShot = DefaultShot;
 }
 
@@ -54,17 +57,17 @@ float ULensmanSpringArmComponent::NoCurve(float val)
 
 float ULensmanSpringArmComponent::SmoothCurve(float val)
 {
-	return FMath::Sin(val * PI05);
+	return 1.f - (FMath::Cos(val * PI) + 1.f) / 2.f;
 }
 
 float ULensmanSpringArmComponent::ExponentialCurve(float val)
 {
-	return 1.f;
+	return FMath::Square(val);
 }
 
 float ULensmanSpringArmComponent::InverseExponentialCurve(float val)
 {
-	return 1.f;
+	return 1.f - FMath::Square(1.f - val);
 }
 
 // Called every frame
@@ -72,16 +75,20 @@ void ULensmanSpringArmComponent::TickComponent(float DeltaTime, ELevelTick TickT
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// Perform linear interpolation between two camera positions using the specified curve funtion
+	// Perform linear interpolation between two camera positions using the specified curve function
 	if (bChangingShot)
 	{
-		ShotTime = FMath::Min(ShotTime + DeltaTime, ShotLength);
+		CurrentShotTime = FMath::Min(CurrentShotTime + DeltaTime, NextShot.Duration);
 
-		float ShotCurveValue = (*this.*Curve)(ShotTime / ShotLength);
+		float ShotCurveValue = (*this.*Curve)(CurrentShotTime / NextShot.Duration);
+
+		TargetArmLength = FMath::Lerp(PreviousShot.Distance, NextShot.Distance, ShotCurveValue);
+		TargetOffset = FMath::Lerp(PreviousShot.Offset, NextShot.Offset, ShotCurveValue);
+		SetRelativeRotation(FMath::Lerp(PreviousShot.Rotation, NextShot.Rotation, ShotCurveValue));
 
 		UE_LOG(LogTemp, Warning, TEXT("%f"), ShotCurveValue);
 
-		if (ShotTime == ShotLength)
+		if (CurrentShotTime == NextShot.Duration)
 		{
 			PreviousShot = NextShot;
 			bChangingShot = false;
@@ -93,11 +100,22 @@ void ULensmanSpringArmComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	FCameraPosition
 */
 
-void FShot::Set(float Distance, FRotator Rotation, FVector Location)
+void FShot::Set(float ShotDistance, FRotator ShotRotation, FVector ShotOffset, EShotInstruction ShotInstruction, float ShotDuration)
 {
-	ShotDistance = Distance;
-	ShotRotation = Rotation;
-	ShotLocation = Location;
+	Distance = ShotDistance;
+	Rotation = ShotRotation;
+	Offset = ShotOffset;
+	Instruction = ShotInstruction;
+	Duration = ShotDuration;
+}
+
+FShot::FShot()
+{
+	Distance = 1000.f;
+	Rotation = FRotator::ZeroRotator;
+	Offset = FVector::ZeroVector;
+	Instruction = EShotInstruction::Smooth;
+	Duration = 1.f;
 }
 
 FShot::FShot(const FShot& Shot)
@@ -105,14 +123,7 @@ FShot::FShot(const FShot& Shot)
 	*this = Shot;
 }
 
-FShot::FShot(float Distance, FRotator Rotation, FVector Location)
+FShot::FShot(float ShotDistance, FRotator ShotRotation, FVector ShotOffset, EShotInstruction ShotInstruction, float ShotDuration)
 {
-	Set(Distance, Rotation, Location);
-}
-
-FShot::FShot(float&& Distance, FRotator&& Rotation, FVector&& Location)
-{
-	ShotDistance = Distance;
-	ShotLocation = Location;
-	ShotRotation = Rotation;
+	Set(ShotDistance, ShotRotation, ShotOffset, ShotInstruction, ShotDuration);
 }

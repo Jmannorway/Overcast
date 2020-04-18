@@ -4,6 +4,7 @@
 #include "Player1.h"
 #include "Components/BillboardComponent.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ACameraTrigger::ACameraTrigger()
@@ -21,4 +22,24 @@ ACameraTrigger::ACameraTrigger()
 	SpriteComponent = CreateEditorOnlyDefaultSubobject<UBillboardComponent>("Sprite");
 	SpriteComponent->SetupAttachment(RootComponent);
 #endif
+}
+
+ECameraTriggerReaction ACameraTrigger::GetInsideReaction() const
+{
+	return InsideReaction;
+}
+
+ECameraTriggerReaction ACameraTrigger::GetOutsideReaction() const
+{
+	return OutsideReaction;
+}
+
+const FShot& ACameraTrigger::GetInsideShot() const
+{
+	return InsideShot;
+}
+
+const FShot& ACameraTrigger::GetOutsideShot() const
+{
+	return OutsideShot;
 }

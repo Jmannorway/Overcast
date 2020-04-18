@@ -7,6 +7,14 @@
 #include "LensmanSpringArmComponent.h"
 #include "CameraTrigger.generated.h"
 
+UENUM(BlueprintType)
+enum class ECameraTriggerReaction : uint8
+{
+	Keep		UMETA(DisplayName = "Keep"),
+	Custom		UMETA(DisplayName = "Custom"),
+	Default		UMETA(DisplayName = "Default")
+};
+
 UCLASS()
 class OVERCAST_API ACameraTrigger : public AActor
 {
@@ -16,25 +24,37 @@ public:
 	// Sets default values for this actor's properties
 	ACameraTrigger();
 
+	UFUNCTION(BlueprintCallable)
+		ECameraTriggerReaction GetInsideReaction() const;
+
+	UFUNCTION(BlueprintCallable)
+		ECameraTriggerReaction GetOutsideReaction() const;
+
+	const FShot& GetInsideShot() const;
+
+	const FShot& GetOutsideShot() const;
+
+protected:
+
 	// The player will collide with this
 	UPROPERTY(EditAnywhere, Category = "Trigger")
 		class UBoxComponent* TriggerBox;
 
-	// New shot for the camera to transition to
+	// Shot to transition to when entering the box
 	UPROPERTY(EditAnywhere, Category = "Trigger")
-		FShot NewShot;
+		ECameraTriggerReaction InsideReaction;
 
-	// How to transition to the new shot
+	// Shot to transition to when entering the box
 	UPROPERTY(EditAnywhere, Category = "Trigger")
-		EShotInstruction ShotInstruction;
+		FShot InsideShot;
 
-	// Length of the transition to the new view
+	// Shot to transition to when leaving the box
 	UPROPERTY(EditAnywhere, Category = "Trigger")
-		float TransitionLength;
+		ECameraTriggerReaction OutsideReaction;
 
-	// If true, camera returns to default state after player exits the trigger
+	// Shot to transition to when leaving the box
 	UPROPERTY(EditAnywhere, Category = "Trigger")
-		bool bReturnToDefault;
+		FShot OutsideShot;
 
 	// Editor-only sprite
 	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "Trigger")
