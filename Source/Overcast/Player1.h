@@ -56,12 +56,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		int32 DeathCon;
-
-	UFUNCTION()
-		void OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
-
-	UFUNCTION()
-		void OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
 	
 
 	/*
@@ -95,16 +89,6 @@ protected:
 	class APushableBox* PushableBox;
 
 	/*
-		Variables and functions to handle player axis constraint
-	*/
-
-	FVector MovementConstraintVector;
-
-	void SetAxisConstraint(EMovementConstraintAxis Axis);
-	FVector GetAxisConstraint() const;
-	void RemoveAxisConstraint();
-
-	/*
 		Camera trigger reference to keep track
 	*/
 
@@ -113,8 +97,6 @@ protected:
 	/*
 		Other variables & functions
 	*/
-
-	FVector PreviousLocation;
 
 	void ReportOnStuff();
 
@@ -128,7 +110,7 @@ public:
 
 
 	//Called for forward/backward input
-	void VerticalMovement(float Value);
+	void ForwardMovement(float Value);
 
 	//Called for side to side
 	void HorizontalMovement(float Value);

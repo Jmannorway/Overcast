@@ -16,4 +16,8 @@ class OVERCAST_API APushableBox : public AStaticMeshActor
 	
 public:
 	APushableBox();
+
+	void MoveForward(float Speed);
+
+	void MoveHorizontally(float Speed);
 };

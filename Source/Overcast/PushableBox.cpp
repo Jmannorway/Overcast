@@ -6,8 +6,25 @@
 
 APushableBox::APushableBox()
 {
-	// Make the block detectable
+	// Active tick
+	PrimaryActorTick.bCanEverTick = true;
+
+	// Make the block detectable & movable
 	UStaticMeshComponent* Mesh = GetStaticMeshComponent();
 	Mesh->SetGenerateOverlapEvents(true);
-	Mesh->SetSimulatePhysics(true);
+	Mesh->SetMobility(EComponentMobility::Movable);
+}
+
+void APushableBox::MoveForward(float Speed)
+{
+	FVector Location = GetActorLocation();
+	Location.X += Speed / 60.f;
+	SetActorLocation(Location, true);
+}
+
+void APushableBox::MoveHorizontally(float Speed)
+{
+	FVector Location = GetActorLocation();
+	Location.Y += Speed / 60.f;
+	SetActorLocation(Location, true);
 }

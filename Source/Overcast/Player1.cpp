@@ -26,7 +26,6 @@ APlayer1::APlayer1()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	
-	
 	// Set spring arm
 	CameraArm = CreateDefaultSubobject<ULensmanSpringArmComponent>("SpringArm");
 	CameraArm->TargetArmLength = 1000.f; //camera follows player at this distance
@@ -45,12 +44,15 @@ APlayer1::APlayer1()
 	bUseControllerRotationRoll = false;
 
 
-
+	
 	//Configure character movement 
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 850.f;
-	GetCharacterMovement()->AirControl = 0.5f;
+	if (UCharacterMovementComponent* PlayerMovement = GetCharacterMovement())
+	{
+		PlayerMovement->bOrientRotationToMovement = true; // Character moves in the direction of input...
+		PlayerMovement->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
+		PlayerMovement->JumpZVelocity = 850.f;
+		PlayerMovement->AirControl = 0.5f;
+	}
 
 
 	// Configure action sphere
@@ -64,14 +66,7 @@ APlayer1::APlayer1()
 	bIsPushingBox = false;
 
 
-	// Unfreeze player
-	MovementConstraintVector = FVector(1.f, 1.f, 1.f);
-
-
-	// Bind overlap functions
-	OnActorBeginOverlap.AddDynamic(this, &APlayer1::OnBeginOverlap);
-	OnActorEndOverlap.AddDynamic(this, &APlayer1::OnEndOverlap);
-
+	// Bind overlap function
 	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
 	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 }
@@ -80,14 +75,20 @@ APlayer1::APlayer1()
 void APlayer1::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
-void APlayer1::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	CameraTrigger = Cast<ACameraTrigger>(OtherActor);
-
-	if (CameraTrigger)
+	if (APushableBox* PushableBoxRef = Cast<APushableBox>(OtherActor))
 	{
+		bCanPushBox = true;
+		PushableBox = PushableBoxRef;
+	}
+	else if (ACameraTrigger* CameraTriggerRef = Cast<ACameraTrigger>(OtherActor))
+	{
+		CameraTrigger = CameraTriggerRef;
+
 		ECameraTriggerReaction Reaction = CameraTrigger->GetInsideReaction();
 
 		if (Reaction == ECameraTriggerReaction::Default)
@@ -97,9 +98,19 @@ void APlayer1::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 	}
 }
 
-void APlayer1::OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
+void APlayer1::OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (CameraTrigger)
+	if (OtherActor == PushableBox)
+	{
+		PushableBox = nullptr;
+		bCanPushBox = false;
+		bIsPushingBox = false;
+
+		auto PlayerMovement = GetCharacterMovement();
+		PlayerMovement->SetPlaneConstraintEnabled(false);
+		PlayerMovement->MaxWalkSpeed = 600.f;
+	}
+	else if (CameraTrigger)
 	{
 		ECameraTriggerReaction Reaction = CameraTrigger->GetOutsideReaction();
 
@@ -107,27 +118,8 @@ void APlayer1::OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
 			CameraArm->SetDefaultCameraPosition();
 		else if (Reaction == ECameraTriggerReaction::Custom)
 			CameraArm->SetCameraPosition(CameraTrigger->GetOutsideShot());
-		
+
 		CameraTrigger = nullptr;
-	}
-}
-
-void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (Cast<APushableBox>(OtherActor))
-	{
-		// Get pointer to the pushable box in question
-		PushableBox = CastChecked <APushableBox>(OtherActor);
-		bCanPushBox = true;
-	}
-}
-
-void APlayer1::OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (OtherActor == PushableBox)
-	{
-		PushableBox = nullptr;
-		bCanPushBox = false;
 	}
 }
 
@@ -139,15 +131,17 @@ void APlayer1::ActionPressed()
 
 		FVector BoxDirection = PushableBox->GetActorLocation() - GetActorLocation();
 		BoxDirection.Normalize();
-		BoxDirection.X = FMath::Abs(BoxDirection.X);
-		BoxDirection.Y = FMath::Abs(BoxDirection.Y);
 
-		if (BoxDirection.X > 0.5f)
-			SetAxisConstraint(EMovementConstraintAxis::Y);
+		UCharacterMovementComponent* PlayerMovement = GetCharacterMovement();
+
+		PlayerMovement->SetPlaneConstraintEnabled(true);
+
+		if (FMath::Abs(BoxDirection.X) < 0.5f)
+			PlayerMovement->SetPlaneConstraintAxisSetting(EPlaneConstraintAxisSetting::X);
 		else
-			SetAxisConstraint(EMovementConstraintAxis::X);
+			PlayerMovement->SetPlaneConstraintAxisSetting(EPlaneConstraintAxisSetting::Y);
 
-		GetCharacterMovement()->MaxWalkSpeed = 450.f;
+		PlayerMovement->MaxWalkSpeed = 450.f;
 	}
 }
 
@@ -156,29 +150,11 @@ void APlayer1::ActionReleased()
 	if (bIsPushingBox)
 	{
 		bIsPushingBox = false;
-		RemoveAxisConstraint();
-		GetCharacterMovement()->MaxWalkSpeed = 600.f;
+		
+		auto PlayerMovement = GetCharacterMovement();
+		PlayerMovement->SetPlaneConstraintEnabled(false);
+		PlayerMovement->MaxWalkSpeed = 600.f;
 	}
-}
-
-void APlayer1::SetAxisConstraint(EMovementConstraintAxis Axis)
-{
-	switch (Axis)
-	{
-	case EMovementConstraintAxis::X: MovementConstraintVector = FVector(0.f, 1.f, 1.f);  break;
-	case EMovementConstraintAxis::Y: MovementConstraintVector = FVector(1.f, 0.f, 1.f);  break;
-	case EMovementConstraintAxis::Z: MovementConstraintVector = FVector(1.f, 1.f, 0.f);  break;
-	}
-}
-
-FVector APlayer1::GetAxisConstraint() const
-{
-	return MovementConstraintVector;
-}
-
-void APlayer1::RemoveAxisConstraint()
-{
-	MovementConstraintVector = FVector(1.f, 1.f, 1.f);
 }
 
 void APlayer1::ReportOnStuff()
@@ -200,13 +176,6 @@ void APlayer1::Tick(float DeltaTime)
 	//	Restart(PlayerDestroyed);
 	//	PlayerDestroyed = false;
 	//}
-
-	if (bIsPushingBox && PushableBox)
-	{
-		PushableBox->AddActorLocalOffset(GetActorLocation() - PreviousLocation);
-	}
-
-	PreviousLocation = GetActorLocation();
 }
 
 // Called to bind functionality to input
@@ -226,11 +195,11 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// Debug info button
 	PlayerInputComponent->BindAction("Test", IE_Pressed, this, &APlayer1::ReportOnStuff);
 	
-	PlayerInputComponent->BindAxis("VerticalMovement", this, &APlayer1::VerticalMovement);
+	PlayerInputComponent->BindAxis("ForwardMovement", this, &APlayer1::ForwardMovement);
 	PlayerInputComponent->BindAxis("HorizontalMovement", this, &APlayer1::HorizontalMovement);
 }
 
-void APlayer1::VerticalMovement(float Value)
+void APlayer1::ForwardMovement(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
@@ -238,19 +207,27 @@ void APlayer1::VerticalMovement(float Value)
 		const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 		
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction * MovementConstraintVector, Value);
+		AddMovementInput(Direction, Value);
 	}
+
+	// Push box if possible
+	if (bIsPushingBox)
+		PushableBox->MoveForward(450.f * Value);
 }
 void APlayer1::HorizontalMovement(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if ((Controller != nullptr) && (Value != 0.f))
 	{
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(Direction * MovementConstraintVector, Value);
+		AddMovementInput(Direction, Value);
 	}
+
+	// Push box if possible
+	if (bIsPushingBox)
+		PushableBox->MoveHorizontally(450.f * Value);
 }
 
 // Spawn a raincloud with the desired offset
