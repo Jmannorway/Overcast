@@ -86,6 +86,9 @@ protected:
 
 	bool bIsPushingBox;
 
+	UPROPERTY(EditAnywhere, Category = "Pushing")
+		float PushingStateSpeed;
+
 	class APushableBox* PushableBox;
 
 	/*

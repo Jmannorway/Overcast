@@ -17,7 +17,19 @@ class OVERCAST_API APushableBox : public AStaticMeshActor
 public:
 	APushableBox();
 
-	void MoveForward(float Speed);
+	virtual void Tick(float DeltaTime) override;
 
-	void MoveHorizontally(float Speed);
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsFalling;
+
+	UFUNCTION()
+		void AddMovement(const FVector& Movement);
+
+protected:
+
+	UPROPERTY(EditAnywhere)
+		float Gravity;
+
+private:
+	FVector NextMovement;
 };

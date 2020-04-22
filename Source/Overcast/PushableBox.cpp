@@ -3,6 +3,7 @@
 
 #include "PushableBox.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 APushableBox::APushableBox()
 {
@@ -13,18 +14,23 @@ APushableBox::APushableBox()
 	UStaticMeshComponent* Mesh = GetStaticMeshComponent();
 	Mesh->SetGenerateOverlapEvents(true);
 	Mesh->SetMobility(EComponentMobility::Movable);
+
+	bIsFalling = false;
+	Gravity = 10.f;
 }
 
-void APushableBox::MoveForward(float Speed)
+void APushableBox::AddMovement(const FVector& Movement)
 {
-	FVector Location = GetActorLocation();
-	Location.X += Speed / 60.f;
-	SetActorLocation(Location, true);
+	NextMovement += Movement * GetWorld()->GetDeltaSeconds();
 }
 
-void APushableBox::MoveHorizontally(float Speed)
+void APushableBox::Tick(float DeltaTime)
 {
-	FVector Location = GetActorLocation();
-	Location.Y += Speed / 60.f;
-	SetActorLocation(Location, true);
+	FHitResult Hit;
+	AddActorLocalOffset(FVector(0.f, 0.f, -Gravity), true, &Hit);
+	bIsFalling = !Hit.IsValidBlockingHit();
+
+	AddActorLocalOffset(NextMovement, true);
+
+	NextMovement = FVector::ZeroVector;
 }

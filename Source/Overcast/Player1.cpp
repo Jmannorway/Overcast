@@ -19,6 +19,8 @@
 #include "LensmanSpringArmComponent.h"
 #include "CameraTrigger.h"
 
+#define ____DEFAULT_MOVEMENT_SPEED 600.f
+
 // Sets default values
 APlayer1::APlayer1()
 {
@@ -64,6 +66,7 @@ APlayer1::APlayer1()
 	// Pushable box default values
 	bCanPushBox = false;
 	bIsPushingBox = false;
+	PushingStateSpeed = 200.f;
 
 
 	// Bind overlap function
@@ -108,7 +111,7 @@ void APlayer1::OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent
 
 		auto PlayerMovement = GetCharacterMovement();
 		PlayerMovement->SetPlaneConstraintEnabled(false);
-		PlayerMovement->MaxWalkSpeed = 600.f;
+		PlayerMovement->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
 	}
 	else if (CameraTrigger)
 	{
@@ -141,7 +144,7 @@ void APlayer1::ActionPressed()
 		else
 			PlayerMovement->SetPlaneConstraintAxisSetting(EPlaneConstraintAxisSetting::Y);
 
-		PlayerMovement->MaxWalkSpeed = 450.f;
+		PlayerMovement->MaxWalkSpeed = PushingStateSpeed;
 	}
 }
 
@@ -153,7 +156,7 @@ void APlayer1::ActionReleased()
 		
 		auto PlayerMovement = GetCharacterMovement();
 		PlayerMovement->SetPlaneConstraintEnabled(false);
-		PlayerMovement->MaxWalkSpeed = 600.f;
+		PlayerMovement->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
 	}
 }
 
@@ -176,6 +179,8 @@ void APlayer1::Tick(float DeltaTime)
 	//	Restart(PlayerDestroyed);
 	//	PlayerDestroyed = false;
 	//}
+
+
 }
 
 // Called to bind functionality to input
@@ -208,11 +213,11 @@ void APlayer1::ForwardMovement(float Value)
 		
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, Value);
-	}
 
-	// Push box if possible
-	if (bIsPushingBox)
-		PushableBox->MoveForward(450.f * Value);
+		// Push box if possible
+		if (bIsPushingBox)
+			PushableBox->AddMovement(FVector::ForwardVector * Value * GetCharacterMovement()->MaxWalkSpeed);
+	}
 }
 void APlayer1::HorizontalMovement(float Value)
 {
@@ -227,7 +232,7 @@ void APlayer1::HorizontalMovement(float Value)
 
 	// Push box if possible
 	if (bIsPushingBox)
-		PushableBox->MoveHorizontally(450.f * Value);
+		PushableBox->AddMovement(FVector::RightVector * Value * GetCharacterMovement()->MaxWalkSpeed);
 }
 
 // Spawn a raincloud with the desired offset
@@ -253,6 +258,6 @@ void APlayer1::Slide()
 void APlayer1::StopSlide()
 {
 
-	GetCharacterMovement()->MaxWalkSpeed = 600.f;
+	GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
 
 }
