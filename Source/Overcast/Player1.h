@@ -4,14 +4,44 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Containers/Map.h"
 #include "Player1.generated.h"
 
 UENUM(BlueprintType)
-enum class EMovementConstraintAxis : uint8
+enum class ESpellType : uint8
 {
-	X	UMETA(DisplayName = "X"),
-	Y	UMETA(DisplayName = "Y"),
-	Z	UMETA(DisplayName = "Z")
+	Rain	UMETA(DisplayName = "Rain"),
+	Wind	UMETA(DisplayName = "Wind"),
+	Shade	UMETA(DisplayName = "Shade"),
+	NUMBER,
+	INVALID
+};
+
+UCLASS(BlueprintType)
+class USpellSelector : public UObject
+{
+	GENERATED_BODY()
+
+private:
+	union { ESpellType t; uint8 i; } mSpell;
+	static const uint8 mNumber = static_cast<uint8>(ESpellType::NUMBER);
+	bool mbKeychain[mNumber];
+
+public:
+	ESpellType IndexToType(uint8 SpellIndex);
+	uint8 TypeToIndex(ESpellType SpellType);
+
+	UFUNCTION(BlueprintCallable) ESpellType GetSpellType() const;
+	UFUNCTION(BlueprintCallable) uint8 GetSpellIndex() const;
+
+	UFUNCTION(BlueprintCallable) void SetSpell(ESpellType SpellType);
+	void SetSpell(uint8 SpellIndex);
+
+	UFUNCTION(BlueprintCallable) void UnlockSpell(ESpellType SpellType);
+	void UnlockSpell(uint8 SpellIndex);
+
+	USpellSelector();
+	
 };
 
 UCLASS()
@@ -36,6 +66,22 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* Camera;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSubclassOf<APlayer1> PlayerSpawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool PlayerDestroyed;
+
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+		int32 DeathCon;
+	
+	/*
+		Spell related variables and functions
+	*/
+
+	UPROPERTY(EditAnywhere, Category = "Spell")
+		USpellSelector* SpellSelector;
+
 	// Configured rain cloud spell BP instance (will probably be replaced by a more intricate spellcasting system some day)
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		TSubclassOf<class ARainCloud> RainCloudSpell;
@@ -48,21 +94,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		float SpellAheadOffset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSubclassOf<APlayer1> PlayerSpawn;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool PlayerDestroyed;
-
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		int32 DeathCon;
-	
+	UFUNCTION()
+		void ChangeSpell();
 
 	/*
 		The action sphere is the radius in which the player can interact with things
 		such as pushable boxes, pickups and, friendly characters
 	*/
-
 	UPROPERTY(EditAnywhere, Category = "Action Sphere")
 		class USphereComponent* ActionSphere;
 
@@ -111,7 +149,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
 	//Called for forward/backward input
 	void ForwardMovement(float Value);
 
@@ -123,6 +160,9 @@ public:
 	void Slide();
 
 	void StopSlide();
+
+	UFUNCTION(BlueprintCallable, Category = "Spell")
+		USpellSelector* GetSpellSelector() const;
 
 	FORCEINLINE UCameraComponent* GetCameraComponent() const { return Camera; }
 	FORCEINLINE ULensmanSpringArmComponent* GetSpringArmComponent() const { return CameraArm; }

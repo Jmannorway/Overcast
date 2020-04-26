@@ -20,6 +20,7 @@
 #include "CameraTrigger.h"
 
 #define ____DEFAULT_MOVEMENT_SPEED 600.f
+#define ____DEFAULT_SLIDE_SPEED 900.f
 
 // Sets default values
 APlayer1::APlayer1()
@@ -72,6 +73,10 @@ APlayer1::APlayer1()
 	// Bind overlap function
 	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
 	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
+
+
+	// Spell variables
+	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
 }
 
 // Called when the game starts or when spawned
@@ -79,6 +84,11 @@ void APlayer1::BeginPlay()
 {
 	Super::BeginPlay();
 
+}
+
+void APlayer1::ChangeSpell()
+{
+	
 }
 
 void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -196,6 +206,7 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Slide", IE_Released, this, &APlayer1::StopSlide);
 	PlayerInputComponent->BindAction("Action", IE_Pressed, this, &APlayer1::ActionPressed);
 	PlayerInputComponent->BindAction("Action", IE_Released, this, &APlayer1::ActionReleased);
+	PlayerInputComponent->BindAction("ChangeSpell", IE_Pressed, this, &APlayer1::ChangeSpell);
 	
 	// Debug info button
 	PlayerInputComponent->BindAction("Test", IE_Pressed, this, &APlayer1::ReportOnStuff);
@@ -241,16 +252,25 @@ void APlayer1::Spell()
 	FRotator Direction = GetActorRotation();
 
 	// Cast rain cloud spell with offset
-	GetWorld()->SpawnActor<ARainCloud>(
-		RainCloudSpell,
-		GetActorLocation() + Direction.Vector() * SpellAheadOffset + SpellLocationOffset,
-		Direction
-	);
+	switch (SpellSelector->GetSpellType())
+	{
+	case ESpellType::Rain:
+		GetWorld()->SpawnActor<ARainCloud>(
+			RainCloudSpell,
+			GetActorLocation() + Direction.Vector() * SpellAheadOffset + SpellLocationOffset,
+			Direction
+			);
+		break;
+
+	case ESpellType::Wind: break;
+	case ESpellType::Shade: break;
+	}
+	
 }
 
 void APlayer1::Slide()
 {
-	GetCharacterMovement()->MaxWalkSpeed = 900.f;
+	GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_SLIDE_SPEED;
 
 
 }
@@ -260,4 +280,70 @@ void APlayer1::StopSlide()
 
 	GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
 
+}
+
+USpellSelector* APlayer1::GetSpellSelector() const
+{
+	return SpellSelector;
+}
+
+/*
+	USpellSelector code
+*/
+
+void USpellSelector::UnlockSpell(uint8 SpellIndex)
+{
+	if (SpellIndex < mNumber)
+		mbKeychain[SpellIndex] = true;
+}
+
+void USpellSelector::UnlockSpell(ESpellType SpellType)
+{
+	if (uint8 SpellIndex = TypeToIndex(SpellType) < mNumber)
+		mbKeychain[SpellIndex] = true;
+}
+
+USpellSelector::USpellSelector()
+{
+	mSpell.i = 0;
+
+	for (bool& i : mbKeychain)
+		i = false;
+
+	mbKeychain[0] = true;
+}
+
+ESpellType USpellSelector::IndexToType(uint8 SpellIndex)
+{
+	return (SpellIndex < mNumber) ? static_cast<ESpellType>(SpellIndex) : ESpellType::INVALID;
+}
+
+uint8 USpellSelector::TypeToIndex(ESpellType SpellType)
+{
+	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID)
+		return static_cast<uint8>(SpellType);
+	else
+		return static_cast<uint8>(ESpellType::INVALID);
+}
+
+ESpellType USpellSelector::GetSpellType() const
+{
+	return mSpell.t;
+}
+
+uint8 USpellSelector::GetSpellIndex() const
+{
+	return mSpell.i;
+}
+
+void USpellSelector::SetSpell(ESpellType SpellType)
+{
+	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID && mbKeychain[TypeToIndex(SpellType)])
+		mSpell.t = SpellType;
+}
+
+void USpellSelector::SetSpell(uint8 SpellIndex)
+{
+	if (SpellIndex < mNumber && mbKeychain[SpellIndex])
+		mSpell.i = SpellIndex;
 }
