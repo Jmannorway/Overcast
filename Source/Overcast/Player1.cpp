@@ -77,6 +77,7 @@ APlayer1::APlayer1()
 
 	// Spell variables
 	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
+	SpellSelector->UnlockAllSpells();
 }
 
 // Called when the game starts or when spawned
@@ -346,4 +347,10 @@ void USpellSelector::SetSpell(uint8 SpellIndex)
 {
 	if (SpellIndex < mNumber && mbKeychain[SpellIndex])
 		mSpell.i = SpellIndex;
+}
+
+void USpellSelector::UnlockAllSpells()
+{
+	for (bool& i : mbKeychain)
+		i = true;
 }

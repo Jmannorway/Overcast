@@ -40,8 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable) void UnlockSpell(ESpellType SpellType);
 	void UnlockSpell(uint8 SpellIndex);
 
+	UFUNCTION(BlueprintCallable) void UnlockAllSpells();
+
 	USpellSelector();
-	
 };
 
 UCLASS()
