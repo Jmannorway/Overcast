@@ -18,6 +18,9 @@
 #include "Engine/EngineTypes.h"
 #include "LensmanSpringArmComponent.h"
 #include "CameraTrigger.h"
+#include "GameHUD.h"
+#include "GameFramework/GameModeBase.h"
+#include "SpellSelector.h"
 
 #define ____DEFAULT_MOVEMENT_SPEED 600.f
 #define ____DEFAULT_SLIDE_SPEED 900.f
@@ -74,10 +77,6 @@ APlayer1::APlayer1()
 	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
 	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 
-
-	// Spell variables
-	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
-	SpellSelector->UnlockAllSpells();
 }
 
 // Called when the game starts or when spawned
@@ -85,11 +84,33 @@ void APlayer1::BeginPlay()
 {
 	Super::BeginPlay();
 
+	/*
+		SpellSelector would get garbage collected if created in constructor
+		for reasons I couldn't be bothered to investigate any further
+	*/
+
+	// Spell variables
+	SpellSelector = NewObject<USpellSelector>();
+
+	if (SpellSelector == nullptr)
+		UE_LOG(LogTemp, Error, TEXT("Couldn't create SpellSelector"))
+
+	SpellSelector->UnlockAllSpells();
 }
 
 void APlayer1::ChangeSpell()
 {
-	
+	(*SpellSelector)++;
+
+	if (auto HUD = Cast<AGameHUD>(Cast<APlayerController>(Controller)->GetHUD()))
+	{
+		HUD->SpellIndex = SpellSelector->GetSpellIndex();
+		UE_LOG(LogTemp, Warning, TEXT("Cast successful %i"), SpellSelector->GetSpellIndex())
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Ref or cast failed"))
+	}
 }
 
 void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -286,71 +307,4 @@ void APlayer1::StopSlide()
 USpellSelector* APlayer1::GetSpellSelector() const
 {
 	return SpellSelector;
-}
-
-/*
-	USpellSelector code
-*/
-
-void USpellSelector::UnlockSpell(uint8 SpellIndex)
-{
-	if (SpellIndex < mNumber)
-		mbKeychain[SpellIndex] = true;
-}
-
-void USpellSelector::UnlockSpell(ESpellType SpellType)
-{
-	if (uint8 SpellIndex = TypeToIndex(SpellType) < mNumber)
-		mbKeychain[SpellIndex] = true;
-}
-
-USpellSelector::USpellSelector()
-{
-	mSpell.i = 0;
-
-	for (bool& i : mbKeychain)
-		i = false;
-
-	mbKeychain[0] = true;
-}
-
-ESpellType USpellSelector::IndexToType(uint8 SpellIndex)
-{
-	return (SpellIndex < mNumber) ? static_cast<ESpellType>(SpellIndex) : ESpellType::INVALID;
-}
-
-uint8 USpellSelector::TypeToIndex(ESpellType SpellType)
-{
-	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID)
-		return static_cast<uint8>(SpellType);
-	else
-		return static_cast<uint8>(ESpellType::INVALID);
-}
-
-ESpellType USpellSelector::GetSpellType() const
-{
-	return mSpell.t;
-}
-
-uint8 USpellSelector::GetSpellIndex() const
-{
-	return mSpell.i;
-}
-
-void USpellSelector::SetSpell(ESpellType SpellType)
-{
-	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID && mbKeychain[TypeToIndex(SpellType)])
-		mSpell.t = SpellType;
-}
-
-void USpellSelector::SetSpell(uint8 SpellIndex)
-{
-	if (SpellIndex < mNumber && mbKeychain[SpellIndex])
-		mSpell.i = SpellIndex;
-}
-
-void USpellSelector::UnlockAllSpells()
-{
-	for (bool& i : mbKeychain)
-		i = true;
 }

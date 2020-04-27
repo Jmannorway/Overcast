@@ -7,43 +7,7 @@
 #include "Containers/Map.h"
 #include "Player1.generated.h"
 
-UENUM(BlueprintType)
-enum class ESpellType : uint8
-{
-	Rain	UMETA(DisplayName = "Rain"),
-	Wind	UMETA(DisplayName = "Wind"),
-	Shade	UMETA(DisplayName = "Shade"),
-	NUMBER,
-	INVALID
-};
-
-UCLASS(BlueprintType)
-class USpellSelector : public UObject
-{
-	GENERATED_BODY()
-
-private:
-	union { ESpellType t; uint8 i; } mSpell;
-	static const uint8 mNumber = static_cast<uint8>(ESpellType::NUMBER);
-	bool mbKeychain[mNumber];
-
-public:
-	ESpellType IndexToType(uint8 SpellIndex);
-	uint8 TypeToIndex(ESpellType SpellType);
-
-	UFUNCTION(BlueprintCallable) ESpellType GetSpellType() const;
-	UFUNCTION(BlueprintCallable) uint8 GetSpellIndex() const;
-
-	UFUNCTION(BlueprintCallable) void SetSpell(ESpellType SpellType);
-	void SetSpell(uint8 SpellIndex);
-
-	UFUNCTION(BlueprintCallable) void UnlockSpell(ESpellType SpellType);
-	void UnlockSpell(uint8 SpellIndex);
-
-	UFUNCTION(BlueprintCallable) void UnlockAllSpells();
-
-	USpellSelector();
-};
+class USpellSelector;
 
 UCLASS()
 class OVERCAST_API APlayer1 : public ACharacter
