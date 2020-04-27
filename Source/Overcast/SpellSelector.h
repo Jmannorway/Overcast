@@ -35,6 +35,13 @@ public:
 	void operator++();
 	void operator++(int);
 
+	void operator--();
+	void operator--(int);
+
+	// More user friendly incremental functions
+	UFUNCTION(BlueprintCallable) void NextSpell();
+	UFUNCTION(BlueprintCallable) void PreviousSpell();
+
 	// Converter functions, mostly for internal use
 	ESpellType IndexToType(uint8 SpellIndex);
 	uint8 TypeToIndex(ESpellType SpellType);

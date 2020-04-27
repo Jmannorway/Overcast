@@ -79,3 +79,28 @@ void USpellSelector::operator++(int)
 {
 	++(*this);
 }
+
+void USpellSelector::operator--()
+{
+	do {
+		if (mSpell.i > 0)
+			mSpell.i--;
+		else
+			mSpell.i = mNumber - 1;
+	} while (!mbKeychain[mSpell.i]);
+}
+
+void USpellSelector::operator--(int)
+{
+	--(*this);
+}
+
+void USpellSelector::NextSpell()
+{
+	++(*this);
+}
+
+void USpellSelector::PreviousSpell()
+{
+	--(*this);
+}
