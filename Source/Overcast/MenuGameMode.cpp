@@ -15,8 +15,6 @@ void AMenuGameMode::BeginPlay()
 	{
 		SetWBP(StartingWidget);
 	}
-
-	
 }
 
 void AMenuGameMode::SetWBP(TSubclassOf<UUserWidget> NewWidget)
