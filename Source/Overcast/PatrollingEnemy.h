@@ -102,7 +102,19 @@ private:
 	// Set vision box length and offset the location correctly
 	void UpdateVision(float NewVisionLength);
 
+	/*
+		A placeholder variables to update owl animations
+	*/
+	FVector PreviousLocation;
+	float LocationDifference;
+
 public:	
+	/*
+		The accompanying placeholder functions for owl animations
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+		float GetLocationDifference() const;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

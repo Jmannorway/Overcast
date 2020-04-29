@@ -170,6 +170,11 @@ void APatrollingEnemy::UpdateVision(float NewVisionLength)
 	VisionBox->SetRelativeLocation({ VisionLength, 0.f, 0.f });
 }
 
+float APatrollingEnemy::GetLocationDifference() const
+{
+	return LocationDifference;
+}
+
 // Called every frame
 void APatrollingEnemy::Tick(float DeltaTime)
 {
@@ -218,7 +223,15 @@ void APatrollingEnemy::Tick(float DeltaTime)
 		break;
 
 	case EPatrollingEnemyStatus::Attacking:
+		Status = EPatrollingEnemyStatus::Patrolling;
+		UE_LOG(LogTemp, Warning, TEXT("Going back to patrolling"));
 		break;
 	}
+
+	// Update location difference for function calls
+	FVector Location = GetActorLocation();
+
+	LocationDifference = FMath::Abs(PreviousLocation.X - Location.X) + FMath::Abs(PreviousLocation.Y - Location.Y);
+	PreviousLocation = Location;
 }
 
