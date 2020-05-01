@@ -16,6 +16,8 @@ APlantPlatformV2::APlantPlatformV2()
 	BottomPlant = CreateDefaultSubobject<UStaticMeshComponent>("BottomPlant");
 	BottomPlant->SetupAttachment(RootComponent);
 
+	GrowthHeight = 1.f;
+
 	TopPlantSpeed = 0.06f;
 	BottomPlantSpeed = 0.02f;
 
@@ -67,7 +69,7 @@ void APlantPlatformV2::Tick(float DeltaTime)
 	else if (GrowingPhase == EGrowingPhase::BottomPlant)
 	{
 		GrowingProgress = FMath::Min(GrowingProgress + BottomPlantSpeed, 1.f);
-		BottomPlant->AddLocalOffset(FVector(0.f, 0.f, BottomPlantSpeed * BottomPlant->Bounds.BoxExtent.Z * 2.0));
+		BottomPlant->AddLocalOffset(FVector(0.f, 0.f, BottomPlantSpeed * BottomPlant->Bounds.BoxExtent.Z * 2.f * GrowthHeight));
 
 		if (GrowingProgress == 1.f)
 			AdvancePhase();

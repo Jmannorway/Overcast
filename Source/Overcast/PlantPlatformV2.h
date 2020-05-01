@@ -41,6 +41,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Plant")
 		float BottomPlantSpeed;
 
+	UPROPERTY(EditAnywhere, Category = "Plant")
+		float GrowthHeight;
+
 	EGrowingPhase GrowingPhase;
 	float GrowingProgress;
 
