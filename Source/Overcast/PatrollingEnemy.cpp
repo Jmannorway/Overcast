@@ -9,6 +9,8 @@
 #include "Player1.h"
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "OvercastGameMode.h"
 
 #define AI_DEFAULT_ACCEPTANCE_RADIUS 24.f
 
@@ -18,16 +20,18 @@ APatrollingEnemy::APatrollingEnemy()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Default values
-	AttackRadius = 72.f;
-	VisionLength = 500.f;
-	Status = EPatrollingEnemyStatus::Patrolling;
-	bTargetInView = false;
-	HuntingTimeout = 300;
+	// Default patrol variables
+	PatrolMovementSpeed = 240.f;
+	VisionLength = 400.f;
 
-	// Set movement defaults
-	auto Movement = GetCharacterMovement();
-	Movement->MaxWalkSpeed = 300.f;
+	// Default hunting variables
+	HuntingTimeout = 240;
+	HuntingMovementSpeed = 450.f;
+
+	// Default attack variables
+	AttackRadius = 96.f;
+
+	SetStatus(EPatrollingEnemyStatus::Patrolling);
 
 	// Init vision box component
 	VisionBox = CreateDefaultSubobject<UBoxComponent>("Vision Box");
@@ -148,6 +152,8 @@ void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 				Status = EPatrollingEnemyStatus::Hunting;
 				UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
 				CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
+				
+				GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
 			}
 
 			HuntingTimer = 0;
@@ -170,9 +176,44 @@ void APatrollingEnemy::UpdateVision(float NewVisionLength)
 	VisionBox->SetRelativeLocation({ VisionLength, 0.f, 0.f });
 }
 
+void APatrollingEnemy::SetStatus(EPatrollingEnemyStatus NewStatus)
+{
+	Status = NewStatus;
+
+	HuntingTimer = 0;
+	AttackTimer = 0;
+
+	switch (NewStatus)
+	{
+	case EPatrollingEnemyStatus::Patrolling:
+		GetCharacterMovement()->MaxWalkSpeed = PatrolMovementSpeed;
+		TargetActor = nullptr;
+		break;
+
+	case EPatrollingEnemyStatus::Hunting: 
+		GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
+		break;
+
+	case EPatrollingEnemyStatus::Attacking:
+	case EPatrollingEnemyStatus::Stunned:
+		GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		break;
+	}
+}
+
+float APatrollingEnemy::GetDistanceToTarget() const
+{
+	return FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation());
+}
+
 float APatrollingEnemy::GetLocationDifference() const
 {
 	return LocationDifference;
+}
+
+EPatrollingEnemyStatus APatrollingEnemy::GetStatus() const
+{
+	return Status;
 }
 
 // Called every frame
@@ -187,9 +228,6 @@ void APatrollingEnemy::Tick(float DeltaTime)
 		Status = EPatrollingEnemyStatus::Patrolling;
 	}
 
-	// Increment the hunting timer
-	HuntingTimer += !bTargetInView;
-
 	switch (Status)
 	{
 	case EPatrollingEnemyStatus::Patrolling:
@@ -203,28 +241,51 @@ void APatrollingEnemy::Tick(float DeltaTime)
 
 	case EPatrollingEnemyStatus::Hunting:
 
+		HuntingTimer += !bTargetInView;
 		UE_LOG(LogTemp, Warning, TEXT("HuntingTimer = %i"), HuntingTimer);
 
-		if (FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation()) < AttackRadius)
+		if (GetDistanceToTarget() < AttackRadius)
 		{
-			Status = EPatrollingEnemyStatus::Attacking;
+			SetStatus(EPatrollingEnemyStatus::Attacking);
 			AIController->StopMovement();
-			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You were hit!"));
 			bTargetInView = false;
+			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You are under attack!"));
 		}
 		else if (HuntingTimer > HuntingTimeout)
 		{
-			Status = EPatrollingEnemyStatus::Patrolling;
+			SetStatus(EPatrollingEnemyStatus::Patrolling);
 			AIController->StopMovement();
-			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You escaped!"));
 			bTargetInView = false;
+			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You escaped!"));
 		}
 
 		break;
 
 	case EPatrollingEnemyStatus::Attacking:
-		Status = EPatrollingEnemyStatus::Patrolling;
-		UE_LOG(LogTemp, Warning, TEXT("Going back to patrolling"));
+
+		if (TargetActor && !TargetActor->IsPendingKill() && GetDistanceToTarget() < AttackRadius)
+		{
+			AttackTimer++;
+
+			if (AttackTimer > AttackLength)
+			{
+				Cast<AOvercastGameMode>(UGameplayStatics::GetGameMode(this))->Respawn();
+				SetStatus(EPatrollingEnemyStatus::Patrolling);
+			}
+		}
+		else
+		{
+			if (bTargetInView)
+			{
+				SetStatus(EPatrollingEnemyStatus::Hunting);
+				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Hunting"))
+			}
+			else
+			{
+				SetStatus(EPatrollingEnemyStatus::Patrolling);
+				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling"))
+			}
+		}
 		break;
 	}
 

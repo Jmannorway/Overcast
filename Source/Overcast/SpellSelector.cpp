@@ -17,11 +17,9 @@ void USpellSelector::UnlockSpell(ESpellType SpellType)
 
 USpellSelector::USpellSelector()
 {
+	Initialize();
 	mSpell.i = 0;
-
-	for (bool& i : mbUnlockedSpells)
-		i = false;
-
+	mbUnlockedSpells[0] = true;
 	UE_LOG(LogTemp, Warning, TEXT("%i"), mbUnlockedSpells.Num());
 }
 
@@ -117,4 +115,12 @@ void USpellSelector::SetUnlockedSpells(const TArray<bool> UnlockedSpells)
 			mbUnlockedSpells[i] = UnlockedSpells[i];
 		}
 	}
+}
+
+void USpellSelector::Initialize()
+{
+	mbUnlockedSpells.SetNum(static_cast<int32>(ESpellType::NUMBER));
+
+	for (bool& i : mbUnlockedSpells)
+		i = false;
 }
