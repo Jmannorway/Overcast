@@ -5,31 +5,29 @@
 
 void USpellSelector::UnlockSpell(uint8 SpellIndex)
 {
-	if (SpellIndex < mNumber)
-		mbKeychain[SpellIndex] = true;
+	if (SpellIndex < mbUnlockedSpells.Num())
+		mbUnlockedSpells[SpellIndex] = true;
 }
 
 void USpellSelector::UnlockSpell(ESpellType SpellType)
 {
-	if (uint8 SpellIndex = TypeToIndex(SpellType) < mNumber)
-		mbKeychain[SpellIndex] = true;
+	if (uint8 SpellIndex = TypeToIndex(SpellType) < mbUnlockedSpells.Num())
+		mbUnlockedSpells[SpellIndex] = true;
 }
 
 USpellSelector::USpellSelector()
 {
 	mSpell.i = 0;
 
-	for (bool& i : mbKeychain)
+	for (bool& i : mbUnlockedSpells)
 		i = false;
 
-	mbKeychain[0] = true;
-
-	UE_LOG(LogTemp, Warning, TEXT("%i"), mNumber);
+	UE_LOG(LogTemp, Warning, TEXT("%i"), mbUnlockedSpells.Num());
 }
 
 ESpellType USpellSelector::IndexToType(uint8 SpellIndex)
 {
-	return (SpellIndex < mNumber) ? static_cast<ESpellType>(SpellIndex) : ESpellType::INVALID;
+	return (SpellIndex < mbUnlockedSpells.Num()) ? static_cast<ESpellType>(SpellIndex) : ESpellType::INVALID;
 }
 
 uint8 USpellSelector::TypeToIndex(ESpellType SpellType)
@@ -52,27 +50,27 @@ uint8 USpellSelector::GetSpellIndex() const
 
 void USpellSelector::SetSpell(ESpellType SpellType)
 {
-	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID && mbKeychain[TypeToIndex(SpellType)])
+	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID && mbUnlockedSpells[TypeToIndex(SpellType)])
 		mSpell.t = SpellType;
 }
 
 void USpellSelector::SetSpell(uint8 SpellIndex)
 {
-	if (SpellIndex < mNumber && mbKeychain[SpellIndex])
+	if (SpellIndex < mbUnlockedSpells.Num() && mbUnlockedSpells[SpellIndex])
 		mSpell.i = SpellIndex;
 }
 
 void USpellSelector::UnlockAllSpells()
 {
-	for (bool& i : mbKeychain)
+	for (bool& i : mbUnlockedSpells)
 		i = true;
 }
 
 void USpellSelector::operator++()
 {
 	do {
-		mSpell.i = (mSpell.i + 1) % mNumber;
-	} while (!mbKeychain[mSpell.i]);
+		mSpell.i = (mSpell.i + 1) % mbUnlockedSpells.Num();
+	} while (!mbUnlockedSpells[mSpell.i]);
 }
 
 void USpellSelector::operator++(int)
@@ -86,8 +84,8 @@ void USpellSelector::operator--()
 		if (mSpell.i > 0)
 			mSpell.i--;
 		else
-			mSpell.i = mNumber - 1;
-	} while (!mbKeychain[mSpell.i]);
+			mSpell.i = mbUnlockedSpells.Num() - 1;
+	} while (!mbUnlockedSpells[mSpell.i]);
 }
 
 void USpellSelector::operator--(int)
@@ -103,4 +101,20 @@ void USpellSelector::NextSpell()
 void USpellSelector::PreviousSpell()
 {
 	--(*this);
+}
+
+const TArray<bool> USpellSelector::GetUnlockedSpells() const
+{
+	return mbUnlockedSpells;
+}
+
+void USpellSelector::SetUnlockedSpells(const TArray<bool> UnlockedSpells)
+{
+	if (UnlockedSpells.Num() <= mbUnlockedSpells.Num())
+	{
+		for (int32 i = UnlockedSpells.Num(); i >= 0; i--)
+		{
+			mbUnlockedSpells[i] = UnlockedSpells[i];
+		}
+	}
 }

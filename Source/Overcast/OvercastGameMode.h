@@ -14,4 +14,17 @@ class OVERCAST_API AOvercastGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+
+	AOvercastGameMode();
+
+protected:
+	
+	UPROPERTY(EditAnywhere, Category = "Overcast")
+		TArray<FName> LevelSequence;
+
+	UFUNCTION(BlueprintCallable, Category = "Overcast")
+		void Save(int32 LevelIndex, int32 CheckpointIndex);
+
+	class UOvercastSaveHandler* SaveHandler;
 };

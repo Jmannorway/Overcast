@@ -27,8 +27,7 @@ class OVERCAST_API USpellSelector : public UObject
 
 private:
 	union { ESpellType t; uint8 i; } mSpell;
-	static const uint8 mNumber = static_cast<uint8>(ESpellType::NUMBER);
-	bool mbKeychain[mNumber];
+	TArray<bool> mbUnlockedSpells;
 
 public:
 	// Overload increments the spell to the next unlocked spell
@@ -57,6 +56,10 @@ public:
 	// Spell unlockers
 	UFUNCTION(BlueprintCallable) void UnlockSpell(ESpellType SpellType);
 	void UnlockSpell(uint8 SpellIndex);
+
+	// Unlocked spells getter & setter
+	const TArray<bool> GetUnlockedSpells() const;
+	void SetUnlockedSpells(const TArray<bool> UnlockedSpells);
 
 	// Used to debug etc.
 	UFUNCTION(BlueprintCallable) void UnlockAllSpells();
