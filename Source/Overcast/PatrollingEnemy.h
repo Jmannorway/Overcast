@@ -14,7 +14,7 @@ enum class EPatrollingEnemyStatus : uint8
 	Patrolling,
 	Hunting,
 	Attacking,
-	ERROR
+	Stunned
 };
 
 UCLASS()
@@ -37,6 +37,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		class APath* PatrolPath;
 
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		float PatrolMovementSpeed;
+
 	// Index for the starting point on a path
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		uint8 StartingPoint;
@@ -49,17 +52,23 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		class UBoxComponent* VisionBox;
 
+
 	// For how long the enemy can chase the player without seeing them
-	UPROPERTY(EditAnywhere, Category = "Patrol")
+	UPROPERTY(EditAnywhere, Category = "Hunting")
 		int32 HuntingTimeout;
 
-	// The radius of the wielded weapon
-	UPROPERTY(EditAnywhere, Category = "Attack")
-		float WeaponRadius;
+	// How fast to move while hunting a target
+	UPROPERTY(EditAnywhere, Category = "Hunting")
+		float HuntingMovementSpeed;
+
 
 	// The radius of an attack
 	UPROPERTY(EditAnywhere, Category = "Attack")
 		float AttackRadius;
+
+	// The time before the impact of an attack
+	UPROPERTY(EditAnywhere, Category = "Attack")
+		float AttackLength;
 
 	// Functions to be called to check if the player has been seen or not
 	UFUNCTION()
@@ -88,8 +97,9 @@ private:
 	// Variable set by vision box overlap functions
 	bool bTargetInView;
 
-	// Variable that times the hunting timeout
+	// Timers for timeouts and attacks
 	int32 HuntingTimer;
+	int32 AttackTimer;
 
 	// Functions to used when moving to any point
 	void MoveToTarget(FVector Target);
@@ -101,6 +111,12 @@ private:
 
 	// Set vision box length and offset the location correctly
 	void UpdateVision(float NewVisionLength);
+
+	// Set status
+	void SetStatus(EPatrollingEnemyStatus NewStatus);
+
+	// Returns the distance to the target that is currently being targetes
+	FORCEINLINE float GetDistanceToTarget() const;
 
 	/*
 		A placeholder variables to update owl animations
@@ -114,6 +130,9 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Patrol")
 		float GetLocationDifference() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Patrol")
+		EPatrollingEnemyStatus GetStatus() const;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

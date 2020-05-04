@@ -64,6 +64,10 @@ public:
 	// Used to debug etc.
 	UFUNCTION(BlueprintCallable) void UnlockAllSpells();
 
+	// Initialization function for the constructor
+	void Initialize();
+
 	// Default constructor locks every spell except for the first in the enum
 	USpellSelector();
+	USpellSelector(uint8 UnlockedSpellIndex);
 };

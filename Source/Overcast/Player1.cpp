@@ -56,8 +56,9 @@ APlayer1::APlayer1()
 	{
 		PlayerMovement->bOrientRotationToMovement = true; // Character moves in the direction of input...
 		PlayerMovement->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
-		PlayerMovement->JumpZVelocity = 850.f;
+		PlayerMovement->JumpZVelocity = 1450.f;
 		PlayerMovement->AirControl = 0.5f;
+		PlayerMovement->GravityScale = 2.5f;
 	}
 
 
