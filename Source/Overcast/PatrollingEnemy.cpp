@@ -201,11 +201,6 @@ void APatrollingEnemy::SetStatus(EPatrollingEnemyStatus NewStatus)
 	}
 }
 
-float APatrollingEnemy::GetDistanceToTarget() const
-{
-	return FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation());
-}
-
 float APatrollingEnemy::GetLocationDifference() const
 {
 	return LocationDifference;
@@ -244,7 +239,7 @@ void APatrollingEnemy::Tick(float DeltaTime)
 		HuntingTimer += !bTargetInView;
 		UE_LOG(LogTemp, Warning, TEXT("HuntingTimer = %i"), HuntingTimer);
 
-		if (GetDistanceToTarget() < AttackRadius)
+		if (FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation()) < AttackRadius)
 		{
 			SetStatus(EPatrollingEnemyStatus::Attacking);
 			AIController->StopMovement();
@@ -267,10 +262,13 @@ void APatrollingEnemy::Tick(float DeltaTime)
 		{
 			AttackTimer++;
 
+			SetActorRotation((TargetActor->GetActorLocation() - GetActorLocation()).Rotation());
+
 			if (AttackTimer > AttackLength)
 			{
 				Cast<AOvercastGameMode>(UGameplayStatics::GetGameMode(this))->Respawn();
 				SetStatus(EPatrollingEnemyStatus::Patrolling);
+				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling & DEAD AF"));
 			}
 		}
 		else

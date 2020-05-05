@@ -19,8 +19,38 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	UPROPERTY(EditAnywhere, Category = "Checkpoint")
+		class UBoxComponent* Box;
+
+	UPROPERTY()
+		class ULineBatchComponent* Draw;
+
+	UPROPERTY()
+		class UArrowComponent* Arrow;
+
+	UPROPERTY(EditAnywhere, Category = "Checkpoint")
+		int32 Index;
+
+	UPROPERTY(EditAnywhere, Category = "Checkpoint")
+		FVector Location;
+
+	UPROPERTY(EditAnywhere, Category = "Checkpoint")
+		FRotator Rotation;
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "Checkpoint")
+		int32 GetCheckpointIndex() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Checkpoint")
+		FVector GetSpawnLocation() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Checkpoint")
+		FRotator GetSpawnRotation() const;
+
+	UFUNCTION()
+		void OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 };
