@@ -16,10 +16,27 @@ class OVERCAST_API AOvercastGameMode : public AGameModeBase
 
 public:
 
+    AOvercastGameMode();
+
     virtual void Tick(float DeltaTime) override;
+
+    UPROPERTY(EditAnywhere, Category = "Overcast")
+        int32 CurrentLevelIndex;
+
+    UPROPERTY(EditAnywhere, Category = "Overcast")
+        int32 CurrentCheckpointIndex;
+
+    UPROPERTY(EditAnywhere, Category = "Overcast")
+        TArray<FName> LevelSequence;
+
+    UPROPERTY(EditAnywhere, Category = "Overcast")
+        TSubclassOf<class ACheckpoint> CheckpointClass;
 
     UFUNCTION(BlueprintCallable, Category = "Overcast")
         void Respawn();
 
-
+    // Subroutines of respawn
+    APawn* SpawnAtCheckpoint();
+    APawn* SpawnAtPlayerStart();
+    APawn* SpawnAtZero();
 };

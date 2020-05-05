@@ -116,7 +116,9 @@ private:
 	void SetStatus(EPatrollingEnemyStatus NewStatus);
 
 	// Returns the distance to the target that is currently being targetes
-	FORCEINLINE float GetDistanceToTarget() const;
+	FORCEINLINE float GetDistanceToTarget() const {
+		return FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation());
+	}
 
 	/*
 		A placeholder variables to update owl animations
