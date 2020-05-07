@@ -55,7 +55,7 @@ protected:
 
 	// For how long the enemy can chase the player without seeing them
 	UPROPERTY(EditAnywhere, Category = "Hunting")
-		int32 HuntingTimeout;
+		int32 HuntingTime;
 
 	// How fast to move while hunting a target
 	UPROPERTY(EditAnywhere, Category = "Hunting")
@@ -66,9 +66,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Attack")
 		float AttackRadius;
 
-	// The time before the impact of an attack
+	// The length of an attack
 	UPROPERTY(EditAnywhere, Category = "Attack")
-		float AttackLength;
+		float AttackTime;
+
+
+	// For how long the owl will be dazed
+	UPROPERTY(EditAnywhere, Category = "Attack")
+		float StunTime;
 
 	// Functions to be called to check if the player has been seen or not
 	UFUNCTION()
@@ -76,6 +81,10 @@ protected:
 
 	UFUNCTION()
 		void OnVisionBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	// Functions to be called when the owl is hit by rainclouds
+	UFUNCTION()
+		void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 private:
 
@@ -98,8 +107,7 @@ private:
 	bool bTargetInView;
 
 	// Timers for timeouts and attacks
-	int32 HuntingTimer;
-	int32 AttackTimer;
+	int32 ActionTimer;
 
 	// Functions to used when moving to any point
 	void MoveToTarget(FVector Target);

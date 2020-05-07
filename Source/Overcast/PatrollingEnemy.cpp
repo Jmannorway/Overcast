@@ -11,6 +11,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "OvercastGameMode.h"
+#include "RainCloud.h"
 
 #define AI_DEFAULT_ACCEPTANCE_RADIUS 24.f
 
@@ -25,11 +26,15 @@ APatrollingEnemy::APatrollingEnemy()
 	VisionLength = 400.f;
 
 	// Default hunting variables
-	HuntingTimeout = 240;
+	HuntingTime = 240;
 	HuntingMovementSpeed = 450.f;
 
 	// Default attack variables
 	AttackRadius = 96.f;
+	AttackTime = 76.f;
+
+	// Default slip variables
+	StunTime = 100.f;
 
 	SetStatus(EPatrollingEnemyStatus::Patrolling);
 
@@ -84,6 +89,8 @@ void APatrollingEnemy::BeginPlay()
 	// Bind delegate with the vision collision box
 	VisionBox->OnComponentBeginOverlap.AddDynamic(this, &APatrollingEnemy::OnVisionBoxBeginOverlap);
 	VisionBox->OnComponentEndOverlap.AddDynamic(this, &APatrollingEnemy::OnVisionBoxEndOverlap);
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APatrollingEnemy::OnCapsuleBeginOverlap);
 
 	// Set vision box length correctly
 	UpdateVision(VisionLength);
@@ -156,7 +163,7 @@ void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 				GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
 			}
 
-			HuntingTimer = 0;
+			ActionTimer = 0;
 			bTargetInView = true;
 			TargetActor = OtherActor;
 		}
@@ -166,6 +173,12 @@ void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 void APatrollingEnemy::OnVisionBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	bTargetInView = false;
+}
+
+void APatrollingEnemy::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (Cast<ARainCloud>(OtherActor))
+		SetStatus(EPatrollingEnemyStatus::Stunned);
 }
 
 void APatrollingEnemy::UpdateVision(float NewVisionLength)
@@ -180,8 +193,7 @@ void APatrollingEnemy::SetStatus(EPatrollingEnemyStatus NewStatus)
 {
 	Status = NewStatus;
 
-	HuntingTimer = 0;
-	AttackTimer = 0;
+	ActionTimer = 0;
 
 	switch (NewStatus)
 	{
@@ -236,8 +248,8 @@ void APatrollingEnemy::Tick(float DeltaTime)
 
 	case EPatrollingEnemyStatus::Hunting:
 
-		HuntingTimer += !bTargetInView;
-		UE_LOG(LogTemp, Warning, TEXT("HuntingTimer = %i"), HuntingTimer);
+		ActionTimer += !bTargetInView;
+		UE_LOG(LogTemp, Warning, TEXT("ActionTimer = %i"), ActionTimer);
 
 		if (FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation()) < AttackRadius)
 		{
@@ -246,7 +258,7 @@ void APatrollingEnemy::Tick(float DeltaTime)
 			bTargetInView = false;
 			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You are under attack!"));
 		}
-		else if (HuntingTimer > HuntingTimeout)
+		else if (ActionTimer > HuntingTime)
 		{
 			SetStatus(EPatrollingEnemyStatus::Patrolling);
 			AIController->StopMovement();
@@ -260,11 +272,11 @@ void APatrollingEnemy::Tick(float DeltaTime)
 
 		if (TargetActor && !TargetActor->IsPendingKill() && GetDistanceToTarget() < AttackRadius)
 		{
-			AttackTimer++;
+			ActionTimer++;
 
 			SetActorRotation((TargetActor->GetActorLocation() - GetActorLocation()).Rotation());
 
-			if (AttackTimer > AttackLength)
+			if (ActionTimer > AttackTime)
 			{
 				Cast<AOvercastGameMode>(UGameplayStatics::GetGameMode(this))->Respawn();
 				SetStatus(EPatrollingEnemyStatus::Patrolling);
@@ -284,6 +296,11 @@ void APatrollingEnemy::Tick(float DeltaTime)
 				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling"))
 			}
 		}
+		break;
+
+	case EPatrollingEnemyStatus::Stunned:
+		ActionTimer++;
+		if (ActionTimer >= StunTime) SetStatus(EPatrollingEnemyStatus::Patrolling);
 		break;
 	}
 

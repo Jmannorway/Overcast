@@ -12,6 +12,9 @@ AOvercastGameMode::AOvercastGameMode()
 {
 	CurrentLevelIndex = 0;
 	CurrentCheckpointIndex = -1;
+
+	LevelSequence.SetNum(1);
+	MenuLevelName = "MenuLevel";
 }
 
 void AOvercastGameMode::Tick(float DeltaTime)
@@ -53,6 +56,16 @@ void AOvercastGameMode::Respawn()
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to spawn player"));
 	}
+}
+
+void AOvercastGameMode::ReturnToMenu()
+{
+	UGameplayStatics::OpenLevel(this, MenuLevelName);
+}
+
+void AOvercastGameMode::SetCheckpointIndex(int32 NewCheckpointIndex)
+{
+	CurrentCheckpointIndex = NewCheckpointIndex;
 }
 
 APawn* AOvercastGameMode::SpawnAtCheckpoint()

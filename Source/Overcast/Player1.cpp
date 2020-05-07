@@ -99,6 +99,11 @@ void APlayer1::BeginPlay()
 	SpellSelector->UnlockAllSpells();
 }
 
+TArray<bool> APlayer1::GetUnlockedSpells() const
+{
+	return SpellSelector->GetUnlockedSpells();
+}
+
 void APlayer1::ChangeSpell()
 {
 	(*SpellSelector)++;

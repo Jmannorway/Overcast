@@ -20,20 +20,38 @@ public:
 
     virtual void Tick(float DeltaTime) override;
 
-    UPROPERTY(EditAnywhere, Category = "Overcast")
-        int32 CurrentLevelIndex;
-
-    UPROPERTY(EditAnywhere, Category = "Overcast")
-        int32 CurrentCheckpointIndex;
-
-    UPROPERTY(EditAnywhere, Category = "Overcast")
-        TArray<FName> LevelSequence;
-
-    UPROPERTY(EditAnywhere, Category = "Overcast")
-        TSubclassOf<class ACheckpoint> CheckpointClass;
-
+    // Kills the player if still alive and respawn them
     UFUNCTION(BlueprintCallable, Category = "Overcast")
         void Respawn();
+
+    // Save current values and return to menu
+    UFUNCTION(BlueprintCallable, Category = "Overcast")
+        void ReturnToMenu();
+
+    UFUNCTION(BlueprintCallable, Category = "Overcast")
+        void SetCheckpointIndex(int32 NewCheckpointIndex);
+
+protected:
+
+    // The current level being played in the level sequence
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+        int32 CurrentLevelIndex;
+
+    // The current checkpoint in the level being used
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+        int32 CurrentCheckpointIndex;
+
+    // The sequence of levels as they appear in the game
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+        TArray<FName> LevelSequence;
+
+    // The name of the menu level
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+        FName MenuLevelName;
+
+    // A class reference to the checkpoint object
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+        TSubclassOf<class ACheckpoint> CheckpointClass;
 
     // Subroutines of respawn
     APawn* SpawnAtCheckpoint();

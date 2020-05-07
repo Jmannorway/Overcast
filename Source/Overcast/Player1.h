@@ -59,6 +59,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		float SpellAheadOffset;
 
+	UFUNCTION(BlueprintCallable, Category = "Spell")
+		TArray<bool> GetUnlockedSpells() const;
+
 	UFUNCTION()
 		void ChangeSpell();
 
