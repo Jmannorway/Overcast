@@ -10,8 +10,8 @@
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "OvercastGameMode.h"
 #include "RainCloud.h"
+#include "OvercastMainGameMode.h"
 
 #define AI_DEFAULT_ACCEPTANCE_RADIUS 24.f
 
@@ -278,7 +278,7 @@ void APatrollingEnemy::Tick(float DeltaTime)
 
 			if (ActionTimer > AttackTime)
 			{
-				Cast<AOvercastGameMode>(UGameplayStatics::GetGameMode(this))->Respawn();
+				Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this))->LoadGame();
 				SetStatus(EPatrollingEnemyStatus::Patrolling);
 				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling & DEAD AF"));
 			}

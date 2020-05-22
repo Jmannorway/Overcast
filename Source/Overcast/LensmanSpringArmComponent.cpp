@@ -46,6 +46,8 @@ void ULensmanSpringArmComponent::SetDefaultCameraPosition()
 
 void ULensmanSpringArmComponent::BeginPlay()
 {
+	Super::BeginPlay();
+
 	DefaultShot.Set(TargetArmLength, GetRelativeRotation(), GetRelativeLocation(), DefaultShot.Instruction, 1.f);
 	PreviousShot = DefaultShot;
 }

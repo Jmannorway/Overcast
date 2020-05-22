@@ -66,39 +66,39 @@ void USpellSelector::UnlockAllSpells()
 
 void USpellSelector::operator++()
 {
-	do {
-		mSpell.i = (mSpell.i + 1) % mbUnlockedSpells.Num();
-	} while (!mbUnlockedSpells[mSpell.i]);
+	NextSpell();
 }
 
 void USpellSelector::operator++(int)
 {
-	++(*this);
+	NextSpell();
 }
 
 void USpellSelector::operator--()
 {
-	do {
-		if (mSpell.i > 0)
-			mSpell.i--;
-		else
-			mSpell.i = mbUnlockedSpells.Num() - 1;
-	} while (!mbUnlockedSpells[mSpell.i]);
+	PreviousSpell();
 }
 
 void USpellSelector::operator--(int)
 {
-	--(*this);
+	PreviousSpell();
 }
 
 void USpellSelector::NextSpell()
 {
-	++(*this);
+	do
+		mSpell.i = (mSpell.i + 1) % mbUnlockedSpells.Num();
+	while (!mbUnlockedSpells[mSpell.i]);
 }
 
 void USpellSelector::PreviousSpell()
 {
-	--(*this);
+	do
+		if (mSpell.i > 0)
+			mSpell.i--;
+		else
+			mSpell.i = mbUnlockedSpells.Num() - 1;
+	while (!mbUnlockedSpells[mSpell.i]);
 }
 
 const TArray<bool> USpellSelector::GetUnlockedSpells() const
@@ -109,17 +109,30 @@ const TArray<bool> USpellSelector::GetUnlockedSpells() const
 void USpellSelector::SetUnlockedSpells(const TArray<bool> UnlockedSpells)
 {
 	if (UnlockedSpells.Num() <= mbUnlockedSpells.Num())
-	{
-		for (int32 i = UnlockedSpells.Num(); i >= 0; i--)
-		{
+		for (int32 i = UnlockedSpells.Num() - 1; i >= 0; i--)
 			mbUnlockedSpells[i] = UnlockedSpells[i];
-		}
-	}
+
+	if (!mbUnlockedSpells[mSpell.i])
+		NextSpell();
+}
+
+uint8 USpellSelector::GetSpellNumber()
+{
+	return static_cast<uint8>(ESpellType::NUMBER);
+}
+
+TArray<bool> USpellSelector::GetDefaultUnlockedSpells()
+{
+	TArray<bool> DefaultUnlockedSpells;
+	DefaultUnlockedSpells.SetNum(USpellSelector::GetSpellNumber());
+	DefaultUnlockedSpells[0] = true;
+
+	return DefaultUnlockedSpells;
 }
 
 void USpellSelector::Initialize()
 {
-	mbUnlockedSpells.SetNum(static_cast<int32>(ESpellType::NUMBER));
+	mbUnlockedSpells.SetNum(USpellSelector::GetSpellNumber());
 
 	for (bool& i : mbUnlockedSpells)
 		i = false;

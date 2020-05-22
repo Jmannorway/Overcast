@@ -18,6 +18,10 @@ public:
 	// Sets default values for this character's properties
 	APlayer1();
 
+	// The spell selector is public to allow for easy editing
+	UPROPERTY(EditAnywhere, Category = "Spell")
+		USpellSelector* SpellSelector;
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -44,9 +48,6 @@ protected:
 		Spell related variables and functions
 	*/
 
-	UPROPERTY(EditAnywhere, Category = "Spell")
-		USpellSelector* SpellSelector;
-
 	// Configured rain cloud spell BP instance (will probably be replaced by a more intricate spellcasting system some day)
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		TSubclassOf<class ARainCloud> RainCloudSpell;
@@ -58,9 +59,6 @@ protected:
 	// How far ahead to of the player to spawn an instance created by a spell
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		float SpellAheadOffset;
-
-	UFUNCTION(BlueprintCallable, Category = "Spell")
-		TArray<bool> GetUnlockedSpells() const;
 
 	UFUNCTION()
 		void ChangeSpell();
@@ -128,6 +126,10 @@ public:
 	void Slide();
 
 	void StopSlide();
+
+	void Pause();
+
+	void Quit();
 
 	UFUNCTION(BlueprintCallable, Category = "Spell")
 		USpellSelector* GetSpellSelector() const;

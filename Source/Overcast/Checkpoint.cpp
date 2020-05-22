@@ -4,10 +4,10 @@
 #include "Checkpoint.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "OvercastGameMode.h"
 #include "Components/BillboardComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "OvercastMainGameMode.h"
 
 // Sets default values
 ACheckpoint::ACheckpoint()
@@ -73,9 +73,9 @@ void ACheckpoint::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 {
 	if (OtherActor == (void*)UGameplayStatics::GetPlayerCharacter(this, 0))
 	{
-		if (auto Gamemode = Cast<AOvercastGameMode>(UGameplayStatics::GetGameMode(this)))
+		if (auto GameMode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
 		{
-			Gamemode->SetCheckpointIndex(CheckpointIndex);
+			//GameMode->SetCheckpointIndex(CheckpointIndex);
 			UE_LOG(LogTemp, Warning, TEXT("Set checkpoint"));
 		}
 	}

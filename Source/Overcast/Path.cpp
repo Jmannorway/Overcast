@@ -19,7 +19,7 @@ APath::APath()
 
 	SpriteComponent = CreateEditorOnlyDefaultSubobject<UBillboardComponent>("Sprite");
 	SetRootComponent(SpriteComponent);
-#endif
+#endif // WITH_EDITORONLY_DATA
 
 	// Path visuals defaults
 	PathColor = FColor::Magenta;

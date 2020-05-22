@@ -56,13 +56,15 @@ public:
 	// Spell unlockers
 	UFUNCTION(BlueprintCallable) void UnlockSpell(ESpellType SpellType);
 	void UnlockSpell(uint8 SpellIndex);
+	UFUNCTION(BlueprintCallable) void UnlockAllSpells();
 
 	// Unlocked spells getter & setter
 	const TArray<bool> GetUnlockedSpells() const;
 	void SetUnlockedSpells(const TArray<bool> UnlockedSpells);
 
-	// Used to debug etc.
-	UFUNCTION(BlueprintCallable) void UnlockAllSpells();
+	// Handy static functions for saving purposes
+	static uint8 GetSpellNumber();
+	static TArray<bool> GetDefaultUnlockedSpells();
 
 	// Initialization function for the constructor
 	void Initialize();

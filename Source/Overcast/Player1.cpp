@@ -20,6 +20,7 @@
 #include "CameraTrigger.h"
 #include "GameHUD.h"
 #include "GameFramework/GameModeBase.h"
+#include "OvercastMainGameMode.h"
 #include "SpellSelector.h"
 
 #define ____DEFAULT_MOVEMENT_SPEED 600.f
@@ -78,6 +79,9 @@ APlayer1::APlayer1()
 	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
 	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 
+
+	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
+	SpellSelector->UnlockAllSpells();
 }
 
 // Called when the game starts or when spawned
@@ -90,18 +94,7 @@ void APlayer1::BeginPlay()
 		for reasons I couldn't be bothered to investigate any further
 	*/
 
-	// Spell variables
-	SpellSelector = NewObject<USpellSelector>();
-
-	if (SpellSelector == nullptr)
-		UE_LOG(LogTemp, Error, TEXT("Couldn't create SpellSelector"))
-
-	SpellSelector->UnlockAllSpells();
-}
-
-TArray<bool> APlayer1::GetUnlockedSpells() const
-{
-	return SpellSelector->GetUnlockedSpells();
+	
 }
 
 void APlayer1::ChangeSpell()
@@ -227,6 +220,7 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	check(PlayerInputComponent);
 
+	// Set up key press function bindings
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAction("RainSpell", IE_Pressed, this, &APlayer1::Spell);
@@ -235,10 +229,10 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Action", IE_Pressed, this, &APlayer1::ActionPressed);
 	PlayerInputComponent->BindAction("Action", IE_Released, this, &APlayer1::ActionReleased);
 	PlayerInputComponent->BindAction("ChangeSpell", IE_Pressed, this, &APlayer1::ChangeSpell);
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &APlayer1::Pause);
+	PlayerInputComponent->BindAction("Quit", IE_Pressed, this, &APlayer1::Quit);
 	
-	// Debug info button
-	PlayerInputComponent->BindAction("Test", IE_Pressed, this, &APlayer1::ReportOnStuff);
-	
+	// Set up axis function bindings
 	PlayerInputComponent->BindAxis("ForwardMovement", this, &APlayer1::ForwardMovement);
 	PlayerInputComponent->BindAxis("HorizontalMovement", this, &APlayer1::HorizontalMovement);
 }
@@ -308,6 +302,19 @@ void APlayer1::StopSlide()
 
 	GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
 
+}
+
+void APlayer1::Pause()
+{
+	if (auto Gamemode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		Gamemode->TogglePause();
+	}
+}
+
+void APlayer1::Quit()
+{
+	CastChecked<AOvercastGameModeBase>(UGameplayStatics::GetGameMode(this))->QuitGame();
 }
 
 USpellSelector* APlayer1::GetSpellSelector() const
