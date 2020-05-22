@@ -5,6 +5,13 @@
 
 UOvercastGameInstance::UOvercastGameInstance() { ; }
 
+void UOvercastGameInstance::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	
+}
+
 FString UOvercastGameInstance::GetSaveSlotString() const
 {
 	return mSaveSlotString;

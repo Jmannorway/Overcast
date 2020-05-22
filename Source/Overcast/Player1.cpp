@@ -22,6 +22,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "OvercastMainGameMode.h"
 #include "SpellSelector.h"
+#include "SpellScroll.h"
 
 #define ____DEFAULT_MOVEMENT_SPEED 600.f
 #define ____DEFAULT_SLIDE_SPEED 900.f
@@ -80,8 +81,8 @@ APlayer1::APlayer1()
 	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
 
 
+	// Spell selector
 	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
-	SpellSelector->UnlockAllSpells();
 }
 
 // Called when the game starts or when spawned
@@ -94,21 +95,9 @@ void APlayer1::BeginPlay()
 		for reasons I couldn't be bothered to investigate any further
 	*/
 
-	
-}
-
-void APlayer1::ChangeSpell()
-{
-	(*SpellSelector)++;
-
-	if (auto HUD = Cast<AGameHUD>(Cast<APlayerController>(Controller)->GetHUD()))
+	if (auto HUD = CastChecked<AGameHUD>(UGameplayStatics::GetPlayerController(this, 0)->GetHUD()))
 	{
-		HUD->SpellIndex = SpellSelector->GetSpellIndex();
-		UE_LOG(LogTemp, Warning, TEXT("Cast successful %i"), SpellSelector->GetSpellIndex())
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Ref or cast failed"))
+		CurrentHUD = HUD;
 	}
 }
 
@@ -211,7 +200,15 @@ void APlayer1::Tick(float DeltaTime)
 	//	PlayerDestroyed = false;
 	//}
 
-
+	// Update the HUD
+	if (CurrentHUD && !CurrentHUD->IsPendingKill())
+	{
+		CurrentHUD->SetHUDSpell(SpellSelector->GetSpellIndex());
+	}
+	else
+	{
+		CurrentHUD = nullptr;
+	}
 }
 
 // Called to bind functionality to input
@@ -228,7 +225,7 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Slide", IE_Released, this, &APlayer1::StopSlide);
 	PlayerInputComponent->BindAction("Action", IE_Pressed, this, &APlayer1::ActionPressed);
 	PlayerInputComponent->BindAction("Action", IE_Released, this, &APlayer1::ActionReleased);
-	PlayerInputComponent->BindAction("ChangeSpell", IE_Pressed, this, &APlayer1::ChangeSpell);
+	PlayerInputComponent->BindAction("NextSpell", IE_Pressed, this, &APlayer1::NextSpell);
 	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &APlayer1::Pause);
 	PlayerInputComponent->BindAction("Quit", IE_Pressed, this, &APlayer1::Quit);
 	
@@ -315,6 +312,11 @@ void APlayer1::Pause()
 void APlayer1::Quit()
 {
 	CastChecked<AOvercastGameModeBase>(UGameplayStatics::GetGameMode(this))->QuitGame();
+}
+
+void APlayer1::NextSpell()
+{
+	SpellSelector->NextSpell();
 }
 
 USpellSelector* APlayer1::GetSpellSelector() const

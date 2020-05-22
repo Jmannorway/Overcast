@@ -60,9 +60,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Spell")
 		float SpellAheadOffset;
 
-	UFUNCTION()
-		void ChangeSpell();
-
 	/*
 		The action sphere is the radius in which the player can interact with things
 		such as pushable boxes, pickups and, friendly characters
@@ -107,6 +104,10 @@ protected:
 
 	void ReportOnStuff();
 
+private:
+
+	class AGameHUD* CurrentHUD;
+
 public:
 
 	// Called every frame
@@ -130,6 +131,8 @@ public:
 	void Pause();
 
 	void Quit();
+
+	void NextSpell();
 
 	UFUNCTION(BlueprintCallable, Category = "Spell")
 		USpellSelector* GetSpellSelector() const;

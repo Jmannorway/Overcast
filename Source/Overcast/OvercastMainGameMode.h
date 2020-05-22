@@ -6,6 +6,8 @@
 #include "OvercastGameModeBase.h"
 #include "OvercastMainGameMode.generated.h"
 
+class UOvercastSaveGame;
+
 /**
  * 
  */
@@ -57,11 +59,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Overcast")
 		bool TogglePause();
 
-protected:
+	const UOvercastSaveGame* GetCurrentSaveGame() const;
 
 	// A SaveGame instance to store values in when saving and read values from when loading
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "File Handling")
-		class UOvercastSaveGame* OvercastSaveGame;
+		UOvercastSaveGame* OvercastSaveGame;
+
+protected:
 
 	// A variable that keeps track of the validity of the save game instance
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "File Handling")
@@ -72,18 +76,21 @@ protected:
 		bool bAutoLoadGame;
 
 	/*
-		Variables for pausing
+		Various classes
 	*/
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Overcast")
 		TSubclassOf<class UUserWidget> PauseWidgetClass;
 
-	/*
-		Variables and functions for spawning/respawning
-	*/
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Overcast")
 		TSubclassOf<class ACheckpoint> CheckpointClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Overcast")
+		TSubclassOf<class ASpellScroll> SpellScrollClass;
+
+	/*
+		Functions for spawning/respawning the player
+	*/
 
 	// Functions used to find locations to respawn in
 	UFUNCTION(BlueprintCallable, Category = "Overcast")

@@ -26,5 +26,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save")
 		TArray<bool> SaveUnlockedSpells;
-
 };

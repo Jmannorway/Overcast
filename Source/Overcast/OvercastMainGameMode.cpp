@@ -11,7 +11,9 @@
 #include "OvercastSaveGame.h"
 #include "OvercastGameInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "SpellScroll.h"
 
+// This might be insanely unsafe, idk??? Undefined behavior? Hopefully not lol
 AOvercastMainGameMode::AOvercastMainGameMode() { ; }
 
 void AOvercastMainGameMode::BeginPlay()
@@ -19,7 +21,16 @@ void AOvercastMainGameMode::BeginPlay()
 	if (bAutoLoadGame)
 	{
 		if (!ReadGame())
-			UE_LOG(LogTemp, Warning, TEXT("ReadGame failed in BeginPlay"))
+		{
+			OvercastSaveGame = CreateNewGameSave();
+			bSaveGameIsValid = true;
+			UE_LOG(LogTemp, Warning, TEXT("ReadGame failed in BeginPlay created a new save game"))
+
+			if (!WriteGame())
+				UE_LOG(LogTemp, Warning, TEXT("WriteGame succeeded"))
+			else
+				UE_LOG(LogTemp, Warning, TEXT("WriteGame failed in BeginPlay trying to save the new game save"))
+		}
 		else
 			UE_LOG(LogTemp, Warning, TEXT("ReadGame succeeded!"))
 
@@ -70,6 +81,11 @@ bool AOvercastMainGameMode::TogglePause()
 	}
 }
 
+const UOvercastSaveGame* AOvercastMainGameMode::GetCurrentSaveGame() const
+{
+	return OvercastSaveGame;
+}
+
 bool AOvercastMainGameMode::SaveGame()
 {
 	if (!bSaveGameIsValid)
@@ -115,7 +131,7 @@ bool AOvercastMainGameMode::WriteGame()
 {
 	return UGameplayStatics::SaveGameToSlot(
 		OvercastSaveGame,
-		CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this))->SaveSlotString,
+		CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this))->GetSaveSlotString(),
 		0);
 }
 
@@ -123,7 +139,7 @@ bool AOvercastMainGameMode::ReadGame()
 {
 	if (SaveExists())
 	{
-		OvercastSaveGame = CastChecked<UOvercastSaveGame>(UGameplayStatics::LoadGameFromSlot(CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this))->SaveSlotString, 0));
+		OvercastSaveGame = CastChecked<UOvercastSaveGame>(UGameplayStatics::LoadGameFromSlot(CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this))->GetSaveSlotString(), 0));
 		bSaveGameIsValid = true;
 		return true;
 	}

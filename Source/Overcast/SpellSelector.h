@@ -29,21 +29,19 @@ private:
 	union { ESpellType t; uint8 i; } mSpell;
 	TArray<bool> mbUnlockedSpells;
 
-public:
-	// Overload increments the spell to the next unlocked spell
-	void operator++();
-	void operator++(int);
+	// Initialization function for the constructor
+	void Initialize();
 
-	void operator--();
-	void operator--(int);
+public:
+
+	// Default constructor locks every spell except for the first in the enum
+	USpellSelector();
+	USpellSelector(uint8 UnlockedSpellIndex);
+	USpellSelector(TArray<bool> UnlockedSpells);
 
 	// More user friendly incremental functions
 	UFUNCTION(BlueprintCallable) void NextSpell();
 	UFUNCTION(BlueprintCallable) void PreviousSpell();
-
-	// Converter functions, mostly for internal use
-	ESpellType IndexToType(uint8 SpellIndex);
-	uint8 TypeToIndex(ESpellType SpellType);
 
 	// Getters for spellcasting, HUD updates, etc.
 	UFUNCTION(BlueprintCallable) ESpellType GetSpellType() const;
@@ -63,13 +61,16 @@ public:
 	void SetUnlockedSpells(const TArray<bool> UnlockedSpells);
 
 	// Handy static functions for saving purposes
-	static uint8 GetSpellNumber();
-	static TArray<bool> GetDefaultUnlockedSpells();
+	UFUNCTION(BlueprintCallable)
+		static uint8 GetSpellNumber();
 
-	// Initialization function for the constructor
-	void Initialize();
+	UFUNCTION(BlueprintCallable)
+		static TArray<bool> GetDefaultUnlockedSpells();
 
-	// Default constructor locks every spell except for the first in the enum
-	USpellSelector();
-	USpellSelector(uint8 UnlockedSpellIndex);
+	// Conversion functions
+	UFUNCTION(BlueprintCallable)
+		static ESpellType IndexToType(uint8 SpellIndex);
+
+	UFUNCTION(BlueprintCallable)
+		static uint8 TypeToIndex(ESpellType SpellType);
 };

@@ -3,18 +3,33 @@
 
 #include "GameHUD.h"
 #include "Engine/Canvas.h"
+#include "Player1.h"
+#include "SpellSelector.h"
 
 AGameHUD::AGameHUD()
 {
-	Spell.SetNum(3);
+	SpellTextures.SetNum(USpellSelector::GetSpellNumber());
+	LastSpellIndex = 0;
 }
 
 void AGameHUD::DrawHUD()
 {
 	Super::DrawHUD();
 
-	DrawTextureSimple(SpellHelp, Canvas->SizeX - SpellHelp->GetSurfaceWidth(), Canvas->SizeY - SpellHelp->GetSurfaceHeight());
-	
-	if (SpellIndex >= 0 && SpellIndex < Spell.Num())
-		DrawTextureSimple(Spell[SpellIndex], 0.f, Canvas->SizeY - SpellHelp->GetSurfaceHeight());
+	DrawTextureSimple(
+		SpellHelpTexture,
+		Canvas->SizeX - SpellHelpTexture->GetSurfaceWidth(),
+		Canvas->SizeY - SpellHelpTexture->GetSurfaceHeight()
+	);
+
+	DrawTextureSimple(
+		SpellTextures[LastSpellIndex],
+		0.f,
+		Canvas->SizeY - SpellHelpTexture->GetSurfaceHeight()
+	);
+}
+
+void AGameHUD::SetHUDSpell(uint8 SpellIndex)
+{
+	LastSpellIndex = SpellIndex;
 }

@@ -16,10 +16,10 @@ UOvercastSaveGame* AOvercastGameModeBase::CreateNewGameSave() const
 	// Create a new save game if none was made before
 	auto GameInstance = CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this));
 	auto SaveGame = CastChecked<UOvercastSaveGame>(
-		UGameplayStatics::CreateSaveGameObject(GameInstance->OvercastSaveGameClass));
+		UGameplayStatics::CreateSaveGameObject(GameInstance->GetOvercastSaveGameClass()));
 
 	SaveGame->SaveCheckpointIndex = -1;
-	SaveGame->SaveLevelName = GameInstance->FirstLevelName;
+	SaveGame->SaveLevelName = GameInstance->GetFirstLevelName();
 	SaveGame->SaveUnlockedSpells = USpellSelector::GetDefaultUnlockedSpells();
 
 	return SaveGame;
@@ -28,7 +28,7 @@ UOvercastSaveGame* AOvercastGameModeBase::CreateNewGameSave() const
 bool AOvercastGameModeBase::SaveExists() const
 {
 	return UGameplayStatics::DoesSaveGameExist(
-		CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this))->SaveSlotString,
+		CastChecked<UOvercastGameInstance>(UGameplayStatics::GetGameInstance(this))->GetSaveSlotString(),
 		0);
 }
 

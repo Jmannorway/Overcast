@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+class APlayer1;
+
 UCLASS()
 class OVERCAST_API AGameHUD : public AHUD
 {
@@ -19,13 +22,21 @@ public:
 
 	virtual void DrawHUD() override;
 
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+		void SetHUDSpell(uint8 SpellIndex);
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
-		int32 SpellIndex;
+		uint8 LastSpellIndex;
 	
 protected:
+
+	/*
+		HUD Textures
+	*/
+
 	UPROPERTY(EditAnywhere, Category = "HUD")
-		UTexture* SpellHelp;
+		UTexture* SpellHelpTexture;
 
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")
-		TArray<UTexture*> Spell;
+		TArray<UTexture*> SpellTextures;
 };

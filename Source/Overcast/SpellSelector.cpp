@@ -3,37 +3,56 @@
 
 #include "SpellSelector.h"
 
-void USpellSelector::UnlockSpell(uint8 SpellIndex)
-{
-	if (SpellIndex < mbUnlockedSpells.Num())
-		mbUnlockedSpells[SpellIndex] = true;
-}
-
-void USpellSelector::UnlockSpell(ESpellType SpellType)
-{
-	if (uint8 SpellIndex = TypeToIndex(SpellType) < mbUnlockedSpells.Num())
-		mbUnlockedSpells[SpellIndex] = true;
-}
+/*
+	Constructors
+*/
 
 USpellSelector::USpellSelector()
 {
 	Initialize();
 	mSpell.i = 0;
 	mbUnlockedSpells[0] = true;
-	UE_LOG(LogTemp, Warning, TEXT("%i"), mbUnlockedSpells.Num());
 }
 
-ESpellType USpellSelector::IndexToType(uint8 SpellIndex)
+USpellSelector::USpellSelector(uint8 UnlockedSpellIndex)
 {
-	return (SpellIndex < mbUnlockedSpells.Num()) ? static_cast<ESpellType>(SpellIndex) : ESpellType::INVALID;
+	Initialize();
+	mSpell.i = UnlockedSpellIndex;
+	mbUnlockedSpells[UnlockedSpellIndex] = true;
 }
 
-uint8 USpellSelector::TypeToIndex(ESpellType SpellType)
+USpellSelector::USpellSelector(TArray<bool> UnlockedSpells)
 {
-	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID)
-		return static_cast<uint8>(SpellType);
-	else
-		return static_cast<uint8>(ESpellType::INVALID);
+	Initialize();
+	mbUnlockedSpells = UnlockedSpells;
+
+	for (uint8 i = 0; i < USpellSelector::GetSpellNumber(); i++)
+		if (mbUnlockedSpells[i])
+			mSpell.i = 0;
+}
+
+void USpellSelector::Initialize()
+{
+	mbUnlockedSpells.SetNum(USpellSelector::GetSpellNumber());
+
+	for (bool& i : mbUnlockedSpells)
+		i = false;
+}
+
+/*
+	Public functions
+*/
+
+void USpellSelector::UnlockSpell(uint8 SpellIndex)
+{
+	if (SpellIndex < USpellSelector::GetSpellNumber())
+		mbUnlockedSpells[SpellIndex] = true;
+}
+
+void USpellSelector::UnlockSpell(ESpellType SpellType)
+{
+	uint8 SpellIndex = TypeToIndex(SpellType);
+	mbUnlockedSpells[SpellIndex] = true;
 }
 
 ESpellType USpellSelector::GetSpellType() const
@@ -48,13 +67,12 @@ uint8 USpellSelector::GetSpellIndex() const
 
 void USpellSelector::SetSpell(ESpellType SpellType)
 {
-	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID && mbUnlockedSpells[TypeToIndex(SpellType)])
-		mSpell.t = SpellType;
+	SetSpell(TypeToIndex(SpellType));
 }
 
 void USpellSelector::SetSpell(uint8 SpellIndex)
 {
-	if (SpellIndex < mbUnlockedSpells.Num() && mbUnlockedSpells[SpellIndex])
+	if (SpellIndex < USpellSelector::GetSpellNumber() && mbUnlockedSpells[SpellIndex])
 		mSpell.i = SpellIndex;
 }
 
@@ -64,30 +82,10 @@ void USpellSelector::UnlockAllSpells()
 		i = true;
 }
 
-void USpellSelector::operator++()
-{
-	NextSpell();
-}
-
-void USpellSelector::operator++(int)
-{
-	NextSpell();
-}
-
-void USpellSelector::operator--()
-{
-	PreviousSpell();
-}
-
-void USpellSelector::operator--(int)
-{
-	PreviousSpell();
-}
-
 void USpellSelector::NextSpell()
 {
 	do
-		mSpell.i = (mSpell.i + 1) % mbUnlockedSpells.Num();
+		mSpell.i = (mSpell.i + 1) % USpellSelector::GetSpellNumber();
 	while (!mbUnlockedSpells[mSpell.i]);
 }
 
@@ -97,7 +95,7 @@ void USpellSelector::PreviousSpell()
 		if (mSpell.i > 0)
 			mSpell.i--;
 		else
-			mSpell.i = mbUnlockedSpells.Num() - 1;
+			mSpell.i = USpellSelector::GetSpellNumber() - 1;
 	while (!mbUnlockedSpells[mSpell.i]);
 }
 
@@ -116,6 +114,10 @@ void USpellSelector::SetUnlockedSpells(const TArray<bool> UnlockedSpells)
 		NextSpell();
 }
 
+/*
+	Static functions start here
+*/
+
 uint8 USpellSelector::GetSpellNumber()
 {
 	return static_cast<uint8>(ESpellType::NUMBER);
@@ -130,10 +132,15 @@ TArray<bool> USpellSelector::GetDefaultUnlockedSpells()
 	return DefaultUnlockedSpells;
 }
 
-void USpellSelector::Initialize()
+ESpellType USpellSelector::IndexToType(uint8 SpellIndex)
 {
-	mbUnlockedSpells.SetNum(USpellSelector::GetSpellNumber());
+	return SpellIndex < USpellSelector::GetSpellNumber() ? static_cast<ESpellType>(SpellIndex) : ESpellType::INVALID;
+}
 
-	for (bool& i : mbUnlockedSpells)
-		i = false;
+uint8 USpellSelector::TypeToIndex(ESpellType SpellType)
+{
+	if (SpellType != ESpellType::NUMBER && SpellType != ESpellType::INVALID)
+		return static_cast<uint8>(SpellType);
+	else
+		return static_cast<uint8>(ESpellType::INVALID);
 }
