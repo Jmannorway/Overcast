@@ -23,6 +23,7 @@
 #include "OvercastMainGameMode.h"
 #include "SpellSelector.h"
 #include "SpellScroll.h"
+#include "Components/CapsuleComponent.h"
 
 #define ____DEFAULT_MOVEMENT_SPEED 600.f
 #define ____DEFAULT_SLIDE_SPEED 900.f
@@ -41,9 +42,16 @@ APlayer1::APlayer1()
 	CameraArm->CameraLagSpeed = 2.0f;
 	CameraArm->SetupAttachment(RootComponent);
 
+
+	// Set up collision for the capsule component
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::CapsuleComponentBeginOverlap);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayer1::CapsuleComponentEndOverlap);
+
+
 	// Set camera
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(CameraArm);
+
 
 	//Don't rotate when controller rotate
 	//let that just affect camera
@@ -51,38 +59,26 @@ APlayer1::APlayer1()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
-
 	
 	//Configure character movement 
-	if (UCharacterMovementComponent* PlayerMovement = GetCharacterMovement())
-	{
-		PlayerMovement->bOrientRotationToMovement = true; // Character moves in the direction of input...
-		PlayerMovement->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
-		PlayerMovement->JumpZVelocity = 1450.f;
-		PlayerMovement->AirControl = 0.5f;
-		PlayerMovement->GravityScale = 2.5f;
-	}
-
-
-	// Configure action sphere
-	ActionSphere = CreateDefaultSubobject<USphereComponent>("ActionSphere");
-	ActionSphere->SetupAttachment(RootComponent);
-	ActionSphere->InitSphereRadius(72.f);
-
-
-	// Pushable box default values
-	bCanPushBox = false;
-	bIsPushingBox = false;
-	PushingStateSpeed = 200.f;
-
-
-	// Bind overlap function
-	ActionSphere->OnComponentBeginOverlap.AddDynamic(this, &APlayer1::OnActionSphereBeginOverlap);
-	ActionSphere->OnComponentEndOverlap.AddDynamic(this, &APlayer1::OnActionSphereEndOverlap);
+	UCharacterMovementComponent* PlayerMovement = GetCharacterMovement();
+	PlayerMovement->bOrientRotationToMovement = true; // Character moves in the direction of input...
+	PlayerMovement->RotationRate = FRotator(0.0f, 540.f, 0.0f); // ... at this rotation rate
+	PlayerMovement->JumpZVelocity = 1450.f;
+	PlayerMovement->AirControl = 0.5f;
+	PlayerMovement->GravityScale = 2.5f;
 
 
 	// Spell selector
 	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
+	SpellSelector->UnlockSpell(ESpellType::Rain);
+	SpellSelector->UnlockSpell(ESpellType::Wind);
+
+
+	// Dash variables
+	DashSpeed = 2000.f;
+	DashLength = 1.f;
+	DashCooldown = 5.f;
 }
 
 // Called when the game starts or when spawned
@@ -90,25 +86,15 @@ void APlayer1::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/*
-		SpellSelector would get garbage collected if created in constructor
-		for reasons I couldn't be bothered to investigate any further
-	*/
-
 	if (auto HUD = CastChecked<AGameHUD>(UGameplayStatics::GetPlayerController(this, 0)->GetHUD()))
 	{
 		CurrentHUD = HUD;
 	}
 }
 
-void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void APlayer1::CapsuleComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (APushableBox* PushableBoxRef = Cast<APushableBox>(OtherActor))
-	{
-		bCanPushBox = true;
-		PushableBox = PushableBoxRef;
-	}
-	else if (ACameraTrigger* CameraTriggerRef = Cast<ACameraTrigger>(OtherActor))
+	if (ACameraTrigger* CameraTriggerRef = Cast<ACameraTrigger>(OtherActor))
 	{
 		CameraTrigger = CameraTriggerRef;
 
@@ -121,19 +107,9 @@ void APlayer1::OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedCompone
 	}
 }
 
-void APlayer1::OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void APlayer1::CapsuleComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor == PushableBox)
-	{
-		PushableBox = nullptr;
-		bCanPushBox = false;
-		bIsPushingBox = false;
-
-		auto PlayerMovement = GetCharacterMovement();
-		PlayerMovement->SetPlaneConstraintEnabled(false);
-		PlayerMovement->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
-	}
-	else if (CameraTrigger)
+	if (CameraTrigger)
 	{
 		ECameraTriggerReaction Reaction = CameraTrigger->GetOutsideReaction();
 
@@ -146,43 +122,41 @@ void APlayer1::OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent
 	}
 }
 
-void APlayer1::ActionPressed()
+void APlayer1::SetPlayerMovementState(EPlayerMovementState NewState)
 {
-	if (PushableBox != nullptr)
+	switch (NewState)
 	{
-		bIsPushingBox = true;
+	case EPlayerMovementState::Normal:
+		GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
+		break;
 
-		FVector BoxDirection = PushableBox->GetActorLocation() - GetActorLocation();
-		BoxDirection.Normalize();
-
-		UCharacterMovementComponent* PlayerMovement = GetCharacterMovement();
-
-		PlayerMovement->SetPlaneConstraintEnabled(true);
-
-		if (FMath::Abs(BoxDirection.X) < 0.5f)
-			PlayerMovement->SetPlaneConstraintAxisSetting(EPlaneConstraintAxisSetting::X);
-		else
-			PlayerMovement->SetPlaneConstraintAxisSetting(EPlaneConstraintAxisSetting::Y);
-
-		PlayerMovement->MaxWalkSpeed = PushingStateSpeed;
+	case EPlayerMovementState::Dashing:
+		DashTimer = 0.f;
+		GetCharacterMovement()->MaxWalkSpeed = DashSpeed;
+		break;
 	}
+
+	PlayerMovementState = NewState;
 }
 
-void APlayer1::ActionReleased()
+EPlayerMovementState APlayer1::GetPlayerMovementState() const
 {
-	if (bIsPushingBox)
-	{
-		bIsPushingBox = false;
-		
-		auto PlayerMovement = GetCharacterMovement();
-		PlayerMovement->SetPlaneConstraintEnabled(false);
-		PlayerMovement->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
-	}
+	return PlayerMovementState;
 }
 
-void APlayer1::ReportOnStuff()
+void APlayer1::DashButtonPressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("CanMoveBox: %d\nMovingBox: %d\nBoxPointer: %X"), bCanPushBox, bIsPushingBox, PushableBox);
+	if (DashTimer == 0.f && GetCharacterMovement()->IsMovingOnGround())
+		SetPlayerMovementState(EPlayerMovementState::Dashing);
+}
+
+void APlayer1::DashButtonReleased()
+{
+	if (PlayerMovementState == EPlayerMovementState::Dashing)
+	{
+		SetPlayerMovementState(EPlayerMovementState::Normal);
+		DashTimer = DashCooldown;
+	}
 }
 
 // Called every frame
@@ -190,15 +164,27 @@ void APlayer1::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//IsPendingKill();
- 
+	// Act as STATEd *maniacal laughter*
+	switch (PlayerMovementState)
+	{
+	case EPlayerMovementState::Normal:
 
-	//if (IsPendingKill())
-	//{
-		
-	//	Restart(PlayerDestroyed);
-	//	PlayerDestroyed = false;
-	//}
+		// Dash cooldown
+		DashTimer = FMath::Max(DashTimer - DeltaTime, 0.f);
+
+		break;
+
+	case EPlayerMovementState::Dashing:
+
+		DashTimer += DeltaTime;
+
+		if (DashTimer >= DashLength || !GetCharacterMovement()->IsMovingOnGround())
+		{
+			SetPlayerMovementState(EPlayerMovementState::Normal);
+		}
+
+		break;
+	}
 
 	// Update the HUD
 	if (CurrentHUD && !CurrentHUD->IsPendingKill())
@@ -218,14 +204,15 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	check(PlayerInputComponent);
 
 	// Set up key press function bindings
+	PlayerInputComponent->BindAction("Spell", IE_Pressed, this, &APlayer1::Spell);
+	PlayerInputComponent->BindAction("NextSpell", IE_Pressed, this, &APlayer1::NextSpell);
+
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAction("RainSpell", IE_Pressed, this, &APlayer1::Spell);
-	PlayerInputComponent->BindAction("Slide", IE_Pressed, this, &APlayer1::Slide);
-	PlayerInputComponent->BindAction("Slide", IE_Released, this, &APlayer1::StopSlide);
-	PlayerInputComponent->BindAction("Action", IE_Pressed, this, &APlayer1::ActionPressed);
-	PlayerInputComponent->BindAction("Action", IE_Released, this, &APlayer1::ActionReleased);
-	PlayerInputComponent->BindAction("NextSpell", IE_Pressed, this, &APlayer1::NextSpell);
+
+	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &APlayer1::DashButtonPressed);
+	PlayerInputComponent->BindAction("Dash", IE_Released, this, &APlayer1::DashButtonReleased);
+
 	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &APlayer1::Pause);
 	PlayerInputComponent->BindAction("Quit", IE_Pressed, this, &APlayer1::Quit);
 	
@@ -243,10 +230,6 @@ void APlayer1::ForwardMovement(float Value)
 		
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, Value);
-
-		// Push box if possible
-		if (bIsPushingBox)
-			PushableBox->AddMovement(FVector::ForwardVector * Value * GetCharacterMovement()->MaxWalkSpeed);
 	}
 }
 void APlayer1::HorizontalMovement(float Value)
@@ -259,10 +242,6 @@ void APlayer1::HorizontalMovement(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, Value);
 	}
-
-	// Push box if possible
-	if (bIsPushingBox)
-		PushableBox->AddMovement(FVector::RightVector * Value * GetCharacterMovement()->MaxWalkSpeed);
 }
 
 // Spawn a raincloud with the desired offset
@@ -275,51 +254,41 @@ void APlayer1::Spell()
 	{
 	case ESpellType::Rain:
 		GetWorld()->SpawnActor<ARainCloud>(
-			RainCloudSpell,
+			RainSpellClass,
 			GetActorLocation() + Direction.Vector() * SpellAheadOffset + SpellLocationOffset,
 			Direction
 			);
 		break;
 
-	case ESpellType::Wind: break;
-	case ESpellType::Shade: break;
+	case ESpellType::Wind:
+		/*
+			Spawn wind spell here
+		*/
+		break;
+
+	case ESpellType::Shade:
+		/*
+			Spawn shade spell here
+		*/
+		break;
 	}
 	
 }
 
-void APlayer1::Slide()
-{
-	GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_SLIDE_SPEED;
-
-
-}
-
-void APlayer1::StopSlide()
-{
-
-	GetCharacterMovement()->MaxWalkSpeed = ____DEFAULT_MOVEMENT_SPEED;
-
-}
-
 void APlayer1::Pause()
 {
-	if (auto Gamemode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
-	{
-		Gamemode->TogglePause();
-	}
+	// Pause if able to cast to main game mode
+	if (auto GameMode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
+		GameMode->TogglePause();
 }
 
 void APlayer1::Quit()
 {
-	CastChecked<AOvercastGameModeBase>(UGameplayStatics::GetGameMode(this))->QuitGame();
+	if (auto GameMode = Cast<AOvercastGameModeBase>(UGameplayStatics::GetGameMode(this)))
+		GameMode->QuitGame();
 }
 
 void APlayer1::NextSpell()
 {
 	SpellSelector->NextSpell();
-}
-
-USpellSelector* APlayer1::GetSpellSelector() const
-{
-	return SpellSelector;
 }

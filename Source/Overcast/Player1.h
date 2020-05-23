@@ -7,6 +7,14 @@
 #include "Containers/Map.h"
 #include "Player1.generated.h"
 
+UENUM(BlueprintType)
+enum class EPlayerMovementState : uint8
+{
+	Normal,
+	Dashing,
+	NUMBER
+};
+
 class USpellSelector;
 
 UCLASS()
@@ -43,14 +51,64 @@ protected:
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		int32 DeathCon;
+
+	/*
+		Sphere component collision functions
+	*/
+
+	UFUNCTION()
+		void CapsuleComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void CapsuleComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
+	/*
+		Keep track of movement states
+	*/
+
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+		EPlayerMovementState PlayerMovementState;
+
+	UFUNCTION()
+		void SetPlayerMovementState(EPlayerMovementState NewState);
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+		EPlayerMovementState GetPlayerMovementState() const;
+protected:
+
+	/*
+		Dashing functions and variables
+	*/
+
+	UFUNCTION()
+		void DashButtonPressed();
+
+	UFUNCTION()
+		void DashButtonReleased();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+		float DashSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+		float DashLength;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+		float DashCooldown;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dash")
+		bool bIsDashing;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dash")
+		float DashTimer;
+
 	/*
 		Spell related variables and functions
 	*/
 
 	// Configured rain cloud spell BP instance (will probably be replaced by a more intricate spellcasting system some day)
 	UPROPERTY(EditAnywhere, Category = "Spell")
-		TSubclassOf<class ARainCloud> RainCloudSpell;
+		TSubclassOf<class ARainCloud> RainSpellClass;
 
 	// Location offset for spells that create a specific object
 	UPROPERTY(EditAnywhere, Category = "Spell")
@@ -61,48 +119,11 @@ protected:
 		float SpellAheadOffset;
 
 	/*
-		The action sphere is the radius in which the player can interact with things
-		such as pushable boxes, pickups and, friendly characters
-	*/
-	UPROPERTY(EditAnywhere, Category = "Action Sphere")
-		class USphereComponent* ActionSphere;
-
-	UFUNCTION()
-		void OnActionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-		void OnActionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UFUNCTION()
-		void ActionPressed();
-
-	UFUNCTION()
-		void ActionReleased();
-
-	/*
-		Variables and functions to interact with pushable boxes
-	*/
-
-	bool bCanPushBox;
-
-	bool bIsPushingBox;
-
-	UPROPERTY(EditAnywhere, Category = "Pushing")
-		float PushingStateSpeed;
-
-	class APushableBox* PushableBox;
-
-	/*
 		Camera trigger reference to keep track
 	*/
 
 	class ACameraTrigger* CameraTrigger;
 
-	/*
-		Other variables & functions
-	*/
-
-	void ReportOnStuff();
 
 private:
 
@@ -124,18 +145,11 @@ public:
 
 	void Spell();
 
-	void Slide();
-
-	void StopSlide();
-
 	void Pause();
 
 	void Quit();
 
 	void NextSpell();
-
-	UFUNCTION(BlueprintCallable, Category = "Spell")
-		USpellSelector* GetSpellSelector() const;
 
 	FORCEINLINE UCameraComponent* GetCameraComponent() const { return Camera; }
 	FORCEINLINE ULensmanSpringArmComponent* GetSpringArmComponent() const { return CameraArm; }
