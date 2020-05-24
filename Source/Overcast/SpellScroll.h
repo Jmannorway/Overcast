@@ -23,6 +23,9 @@ protected:
 		class USphereComponent* ScrollCollisionSphere;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scroll")
+		class UTriggerComponent* TriggerComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scroll")
 		UStaticMeshComponent* ScrollMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scroll")

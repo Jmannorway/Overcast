@@ -10,6 +10,7 @@
 #include "OvercastSaveGame.h"
 #include "SpellSelector.h"
 #include "Components/CapsuleComponent.h"
+#include "TriggerComponent.h"
 
 // Sets default values
 ASpellScroll::ASpellScroll()
@@ -31,6 +32,8 @@ ASpellScroll::ASpellScroll()
 
 	bDestroyOnCollect = true;
 	bCollectable = true;
+
+	TriggerComponent = CreateDefaultSubobject<UTriggerComponent>("TriggerComponent");
 }
 
 void ASpellScroll::ScrollSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -44,6 +47,7 @@ void ASpellScroll::ScrollSphereOverlap(UPrimitiveComponent* OverlappedComponent,
 			{
 				Player->SpellSelector->UnlockSpell(SpellToUnlock);
 				Player->SpellSelector->SetSpell(SpellToUnlock);
+				TriggerComponent->Trigger();
 				SetCollectable(false);
 			}
 		}

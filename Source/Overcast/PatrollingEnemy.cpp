@@ -2,7 +2,6 @@
 
 
 #include "PatrollingEnemy.h"
-#include "DrawDebugHelpers.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Path.h"
@@ -12,8 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "RainCloud.h"
 #include "OvercastMainGameMode.h"
-
-#define AI_DEFAULT_ACCEPTANCE_RADIUS 24.f
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APatrollingEnemy::APatrollingEnemy()
@@ -24,17 +22,21 @@ APatrollingEnemy::APatrollingEnemy()
 	// Default patrol variables
 	PatrolMovementSpeed = 240.f;
 	VisionLength = 400.f;
+	PatrolAcceptanceRadius = 24.f;
 
 	// Default hunting variables
-	HuntingTime = 240;
 	HuntingMovementSpeed = 450.f;
 
 	// Default attack variables
-	AttackRadius = 96.f;
-	AttackTime = 76.f;
+	AttackRadii.Attack = 128.f;
+	AttackRadii.Adjustment = 96.f;
+	AttackRadii.Acceptance = 64.f;
 
-	// Default slip variables
-	StunTime = 100.f;
+	// Default timing
+	Time.Hunting = 4.f;
+	Time.Attack = 0.5f;
+	Time.Stun = 2.f;
+	Time.Wait = 3.5f;
 
 	SetStatus(EPatrollingEnemyStatus::Patrolling);
 
@@ -55,7 +57,6 @@ APatrollingEnemy::APatrollingEnemy()
 // Called when the game starts or when spawned
 void APatrollingEnemy::BeginPlay()
 {
-	// Call overridden function
 	Super::BeginPlay();
 
 	// Validate aicontroller, path, and path anchor number before doing anything
@@ -74,16 +75,16 @@ void APatrollingEnemy::BeginPlay()
 	// Move to starting location if not already there
 	FVector AnchorLocation;
 
-	if (bIsPatrollingPath && StartingPoint < PatrolPath->GetPointNumber()) // starting location is a defined point on the path
+	if (bIsPatrollingPath && PatrolStartingPoint < PatrolPath->GetPointNumber()) // starting location is a defined point on the path
 	{
-		AnchorLocation = PatrolPath->GetPointLocation(StartingPoint);
-		CurrentPathAnchor = PatrolPath->GetPointAnchor(StartingPoint);
+		AnchorLocation = PatrolPath->GetPointLocation(PatrolStartingPoint);
+		CurrentPathAnchor = PatrolPath->GetPointAnchor(PatrolStartingPoint);
 	}
 	else // starting location is the first path anchor
 		AnchorLocation = PatrolPath->GetAnchorLocation(0);
 
 	// Move to starting point if not already there
-	if (FVector::Distance(GetActorLocation(), AnchorLocation) > AI_DEFAULT_ACCEPTANCE_RADIUS)
+	if (FVector::Distance(GetActorLocation(), AnchorLocation) > PatrolAcceptanceRadius)
 		MoveToTarget(AnchorLocation);
 
 	// Bind delegate with the vision collision box
@@ -103,8 +104,8 @@ void APatrollingEnemy::OnConstruction(const FTransform& Transform)
 
 	UpdateVision(VisionLength);
 
-	FlushPersistentDebugLines(GetWorld());
-	DrawDebugSphere(GetWorld(), GetActorLocation(), AttackRadius, (int32)AttackRadius / 16, FColor::Yellow, true);
+	// Make sure attack radii values are valid
+	AttackRadii.Validate();
 }
 
 void APatrollingEnemy::MoveToTarget(FVector Target)
@@ -123,49 +124,58 @@ void APatrollingEnemy::MoveToTarget(AActor* Target)
 	AIController->MoveTo(Request);
 }
 
-void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, FVector Location) const
+void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& OutMoveRequest, FVector Location) const
 {
-	MoveRequest.SetAcceptanceRadius(AI_DEFAULT_ACCEPTANCE_RADIUS);
-	MoveRequest.SetGoalLocation(Location);
+	OutMoveRequest.SetAcceptanceRadius(PatrolAcceptanceRadius);
+	OutMoveRequest.SetGoalLocation(Location);
 }
 
-void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, AActor* Target) const
+void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& OutMoveRequest, AActor* Target) const
 {
-	//MoveRequest.SetAcceptanceRadius(AttackRadius);
-	MoveRequest.SetGoalActor(Target);
+	OutMoveRequest.SetAcceptanceRadius(AttackRadii.Acceptance);
+	OutMoveRequest.SetGoalActor(Target);
+}
+
+float APatrollingEnemy::DistanceToTarget(AActor* Target) const
+{
+	return FVector::Distance(GetActorLocation(), Target->GetActorLocation());
 }
 
 void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	class APlayer1* Player = Cast<APlayer1>(OtherActor);
-
-	if (Player)
+	if (Status != EPatrollingEnemyStatus::Stunned)
 	{
-		FAIMoveRequest Request;
-		GenerateEnemyMoveRequest(Request, OtherActor);
+		APlayer1* Player = Cast<APlayer1>(OtherActor);
 
-		FPathFindingQuery Query;
-		AIController->BuildPathfindingQuery(Request, Query);
-
-		FNavPathSharedPtr Path;
-		AIController->FindPathForMoveRequest(Request, Query, Path);
-
-		// Chase player if nav path points are less than three
-		if (Path && Path->GetPathPoints().Num() < 3)
+		if (Player)
 		{
-			if (Status == EPatrollingEnemyStatus::Patrolling)
-			{
-				AIController->MoveTo(Request);
-				Status = EPatrollingEnemyStatus::Hunting;
-				UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
-				CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
-				
-				GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
-			}
+			// Get information about the fastest AI path to the player
+			FAIMoveRequest Request;
+			GenerateEnemyMoveRequest(Request, OtherActor);
 
-			ActionTimer = 0;
-			bTargetInView = true;
-			TargetActor = OtherActor;
+			FPathFindingQuery Query;
+			AIController->BuildPathfindingQuery(Request, Query);
+
+			FNavPathSharedPtr Path;
+			AIController->FindPathForMoveRequest(Request, Query, Path);
+
+			// Chase player if nav path points are less than three
+			if (Path && Path->GetPathPoints().Num() < 3)
+			{
+				if (Status == EPatrollingEnemyStatus::Patrolling)
+				{
+					AIController->MoveTo(Request);
+					Status = EPatrollingEnemyStatus::Hunting;
+					UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
+					CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
+
+					GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
+				}
+
+				StateTimer = 0.f;
+				bTargetInView = true;
+				TargetActor = OtherActor;
+			}
 		}
 	}
 }
@@ -185,16 +195,17 @@ void APatrollingEnemy::UpdateVision(float NewVisionLength)
 {
 	// Visualize changes in vision length
 	FVector VisionBoxExtent = VisionBox->GetScaledBoxExtent();
-	VisionBox->SetBoxExtent({ VisionLength, VisionBoxExtent.Y, VisionBoxExtent.Z });
-	VisionBox->SetRelativeLocation({ VisionLength, 0.f, 0.f });
+	VisionBox->SetBoxExtent({ VisionLength, VisionBoxExtent.Y, VisionHeight });
+	VisionBox->SetRelativeLocation({ VisionLength, 0.f, VisionHeight - GetCapsuleComponent()->GetScaledCapsuleHalfHeight() });
 }
 
 void APatrollingEnemy::SetStatus(EPatrollingEnemyStatus NewStatus)
 {
-	Status = NewStatus;
+	// Transition from status...
+	if (Status == EPatrollingEnemyStatus::Attacking)
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	ActionTimer = 0;
-
+	// ...to status
 	switch (NewStatus)
 	{
 	case EPatrollingEnemyStatus::Patrolling:
@@ -202,15 +213,25 @@ void APatrollingEnemy::SetStatus(EPatrollingEnemyStatus NewStatus)
 		TargetActor = nullptr;
 		break;
 
-	case EPatrollingEnemyStatus::Hunting: 
+	case EPatrollingEnemyStatus::Hunting:
 		GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
 		break;
 
 	case EPatrollingEnemyStatus::Attacking:
+		GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		break;
+
 	case EPatrollingEnemyStatus::Stunned:
+	case EPatrollingEnemyStatus::Wait:
 		GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		TargetActor = nullptr;
 		break;
 	}
+
+	// Set status changing variables
+	StateTimer = 0.f;
+	Status = NewStatus;
 }
 
 float APatrollingEnemy::GetLocationDifference() const
@@ -221,6 +242,11 @@ float APatrollingEnemy::GetLocationDifference() const
 EPatrollingEnemyStatus APatrollingEnemy::GetStatus() const
 {
 	return Status;
+}
+
+float APatrollingEnemy::GetAttackTime() const
+{
+	return Time.Attack;
 }
 
 // Called every frame
@@ -248,59 +274,75 @@ void APatrollingEnemy::Tick(float DeltaTime)
 
 	case EPatrollingEnemyStatus::Hunting:
 
-		ActionTimer += !bTargetInView;
-		UE_LOG(LogTemp, Warning, TEXT("ActionTimer = %i"), ActionTimer);
+		// Increment action timer if target is in view
+		StateTimer = bTargetInView ? 0 : StateTimer + DeltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("StateTimer = %f"), StateTimer);
 
-		if (FVector::Distance(GetActorLocation(), TargetActor->GetActorLocation()) < AttackRadius)
-		{
-			SetStatus(EPatrollingEnemyStatus::Attacking);
-			AIController->StopMovement();
-			bTargetInView = false;
-			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You are under attack!"));
-		}
-		else if (ActionTimer > HuntingTime)
+		// Return to patrolling if target actor is invalid or escaped
+		if (StateTimer > Time.Hunting || !TargetActor || TargetActor->IsPendingKill())
 		{
 			SetStatus(EPatrollingEnemyStatus::Patrolling);
 			AIController->StopMovement();
 			bTargetInView = false;
 			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You escaped!"));
+		} // Start attacking if within range
+		else if (DistanceToTarget(TargetActor) < AttackRadii.Attack)
+		{
+			SetStatus(EPatrollingEnemyStatus::Attacking);
+			UE_LOG(LogTemp, Warning, TEXT("Enemy Patrol: You are under attack!"));
 		}
 
 		break;
 
 	case EPatrollingEnemyStatus::Attacking:
 
-		if (TargetActor && !TargetActor->IsPendingKill() && GetDistanceToTarget() < AttackRadius)
+		if (TargetActor && !TargetActor->IsPendingKill() && DistanceToTarget(TargetActor) <= AttackRadii.Attack)
 		{
-			ActionTimer++;
+			// Always face the player
+			const float TargetActorYaw = TargetActor->GetActorRotation().Pitch;
+			const float PatrollingEnemyYaw = GetActorRotation().Pitch;
+			AddActorLocalRotation(FRotator(0.f, TargetActorYaw, 0.f) - FRotator(0.f, PatrollingEnemyYaw, 0.f));
 
-			SetActorRotation((TargetActor->GetActorLocation() - GetActorLocation()).Rotation());
+			StateTimer += DeltaTime;
 
-			if (ActionTimer > AttackTime)
+			// The attack landed, load the game
+			if (StateTimer >= Time.Attack)
 			{
-				Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this))->LoadGame();
-				SetStatus(EPatrollingEnemyStatus::Patrolling);
-				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling & DEAD AF"));
+				if (auto GameMode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("You are dead boi"));
+					GameMode->LoadGame();
+					SetStatus(EPatrollingEnemyStatus::Patrolling);
+				}
+			}
+			else if (AIController->GetMoveStatus() == EPathFollowingStatus::Idle)
+			{
+				// Follow the player to the attack acceptance radius once out of adjustment radius
+				if (DistanceToTarget(TargetActor) > AttackRadii.Adjustment)
+				{
+					MoveToTarget(TargetActor);
+				}
 			}
 		}
 		else
 		{
 			if (bTargetInView)
-			{
 				SetStatus(EPatrollingEnemyStatus::Hunting);
-				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Hunting"))
-			}
 			else
-			{
-				SetStatus(EPatrollingEnemyStatus::Patrolling);
-				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling"))
-			}
+				SetStatus(EPatrollingEnemyStatus::Wait);
 		}
 		break;
 
 	case EPatrollingEnemyStatus::Stunned:
-		ActionTimer++;
-		if (ActionTimer >= StunTime) SetStatus(EPatrollingEnemyStatus::Patrolling);
+		StateTimer += DeltaTime;
+		if (StateTimer >= Time.Stun)
+			SetStatus(EPatrollingEnemyStatus::Hunting);
+		break;
+
+	case EPatrollingEnemyStatus::Wait:
+		StateTimer += DeltaTime;
+		if (StateTimer >= Time.Wait)
+			SetStatus(EPatrollingEnemyStatus::Patrolling);
 		break;
 	}
 
@@ -311,3 +353,34 @@ void APatrollingEnemy::Tick(float DeltaTime)
 	PreviousLocation = Location;
 }
 
+void FPatrollingEnemyAttackRadii::Validate()
+{
+	Adjustment = FMath::Min(Attack, Adjustment);
+	Acceptance = FMath::Min(Adjustment, Acceptance);
+}
+
+// Old attack state code
+/*
+if (TargetActor && !TargetActor->IsPendingKill() && GetDistanceToTarget() < AttackRadii.Attack)
+		{
+			StateTimer++;
+
+			// Make the owl face the player
+			const float TargetActorYaw = TargetActor->GetActorRotation().Pitch;
+			const float PatrollingEnemyYaw = GetActorRotation().Pitch;
+			AddActorLocalRotation(FRotator(0.f, TargetActorYaw, 0.f) - FRotator(0.f, PatrollingEnemyYaw, 0.f));
+
+			if (StateTimer > AttackTime)
+			{
+				Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this))->LoadGame();
+				SetStatus(EPatrollingEnemyStatus::Wait);
+
+				UE_LOG(LogTemp, Warning, TEXT("Attacking -> Patrolling & DEAD AF"));
+			}
+		}
+		else
+		{
+			SetStatus(EPatrollingEnemyStatus::Hunting);
+			UE_LOG(LogTemp, Warning, TEXT("Attacking -> Hunting"));
+		}
+*/
