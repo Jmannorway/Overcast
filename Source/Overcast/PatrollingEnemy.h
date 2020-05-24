@@ -14,7 +14,60 @@ enum class EPatrollingEnemyStatus : uint8
 	Patrolling,
 	Hunting,
 	Attacking,
-	Stunned
+	Stunned,
+	Wait,
+	NUMBER
+};
+
+USTRUCT(BlueprintType)
+struct FPatrollingEnemyAttackRadii
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	// The radius of an attack
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Attack;
+
+	// The radius which satisfies the owl's strike zone
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Adjustment;
+
+	// The radius in which the owl will have stopped moving
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Acceptance;
+
+	// A functions that ensures that Attack >= Adjustment >= Acceptance
+	void Validate();
+
+	FPatrollingEnemyAttackRadii() { ; }
+};
+
+USTRUCT(BlueprintType)
+struct FPatrollingEnemyTiming
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	// How long to stay out of sight to escape
+	UPROPERTY(EditAnywhere)
+		float Hunting;
+
+	// The length of an attack
+	UPROPERTY(EditAnywhere)
+		float Attack;
+
+	// How long the owl is stunned
+	UPROPERTY(EditAnywhere)
+		float Stun;
+
+	// How long the owl will wait before returning to patrol
+	UPROPERTY(EditAnywhere)
+		float Wait;
+
+	FPatrollingEnemyTiming() { ; }
 };
 
 UCLASS()
@@ -37,43 +90,46 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		class APath* PatrolPath;
 
+	//
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		float PatrolAcceptanceRadius;
+
+	//
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		float PatrolMovementSpeed;
 
+	// How fast to move while hunting a target
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		float HuntingMovementSpeed;
+
 	// Index for the starting point on a path
 	UPROPERTY(EditAnywhere, Category = "Patrol")
-		uint8 StartingPoint;
+		uint8 PatrolStartingPoint;
 
 	// How far the patrolling enemy can spot the player from
 	UPROPERTY(EditAnywhere, Category = "Patrol")
 		float VisionLength;
 
-	// Collision box used for vision
+	// Vision height
 	UPROPERTY(EditAnywhere, Category = "Patrol")
-		class UBoxComponent* VisionBox;
+		float VisionHeight;
 
-
-	// For how long the enemy can chase the player without seeing them
-	UPROPERTY(EditAnywhere, Category = "Hunting")
-		int32 HuntingTime;
-
-	// How fast to move while hunting a target
-	UPROPERTY(EditAnywhere, Category = "Hunting")
-		float HuntingMovementSpeed;
-
+	// State timing (Hover over each element for individual explanation)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Patrol")
+		FPatrollingEnemyTiming Time;
 
 	// The radius of an attack
-	UPROPERTY(EditAnywhere, Category = "Attack")
-		float AttackRadius;
+	UPROPERTY(EditAnywhere, Category = "Patrol")
+		FPatrollingEnemyAttackRadii AttackRadii;
 
-	// The length of an attack
-	UPROPERTY(EditAnywhere, Category = "Attack")
-		float AttackTime;
+	// Collision box used for vision
+	UPROPERTY()
+		class UBoxComponent* VisionBox;
 
+	// Returns the distance to the targeted actor
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+		float DistanceToTarget(AActor* Target) const;
 
-	// For how long the owl will be dazed
-	UPROPERTY(EditAnywhere, Category = "Attack")
-		float StunTime;
 
 	// Functions to be called to check if the player has been seen or not
 	UFUNCTION()
@@ -106,16 +162,16 @@ private:
 	// Variable set by vision box overlap functions
 	bool bTargetInView;
 
-	// Timers for timeouts and attacks
-	int32 ActionTimer;
+	// Multi-purpose timer variable to do timing with
+	float StateTimer;
 
 	// Functions to used when moving to any point
 	void MoveToTarget(FVector Target);
 	void MoveToTarget(AActor* Target);
 
 	// Subfunctions to be called when getting a move request
-	void GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, FVector Location) const;
-	void GenerateEnemyMoveRequest(FAIMoveRequest& MoveRequest, AActor* Target) const;
+	void GenerateEnemyMoveRequest(FAIMoveRequest& OutMoveRequest, FVector Location) const;
+	void GenerateEnemyMoveRequest(FAIMoveRequest& OutMoveRequest, AActor* Target) const;
 
 	// Set vision box length and offset the location correctly
 	void UpdateVision(float NewVisionLength);
@@ -138,11 +194,14 @@ public:
 	/*
 		The accompanying placeholder functions for owl animations
 	*/
-	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	UFUNCTION(BlueprintCallable, Category = "Animation")
 		float GetLocationDifference() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Patrol")
+	UFUNCTION(BlueprintCallable, Category = "Animation")
 		EPatrollingEnemyStatus GetStatus() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+		float GetAttackTime() const;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
