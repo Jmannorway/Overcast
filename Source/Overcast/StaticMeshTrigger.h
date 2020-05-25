@@ -29,9 +29,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
 		FVector TriggerMovement;
 
-	// The speed at which to move after being triggered
+	// How to rotate when triggered
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
-		float TriggerMovementSpeed;
+		FRotator TriggerRotation;
+
+	// Translation duration in seconds
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
+		int32 TriggerTime;
 
 	// The index of the trigger component to get triggeredby
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
@@ -47,10 +51,10 @@ private:
 		bool bTriggered;
 
 	UPROPERTY()
-		int32 TriggerMovementTime;
+		FVector TriggerMovementStep;
 
 	UPROPERTY()
-		FVector TriggerMovementStep;
+		FRotator TriggerRotationStep;
 
 public:	
 	// Called every frame

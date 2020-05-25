@@ -24,19 +24,13 @@ void UTriggerComponent::Trigger()
 
 	AStaticMeshTrigger* CastedTriggerableActor;
 
-	UE_LOG(LogTemp, Warning, TEXT("This code is excecuted"));
-
 	for (int32 i = 0; i < TriggerableActor.Num(); i++)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("This code is also excecuted"));
-
 		CastedTriggerableActor = CastChecked<AStaticMeshTrigger>(TriggerableActor[i]);
 
 		if (CastedTriggerableActor->GetTriggerIndex() == TriggerIndex)
 		{
 			CastedTriggerableActor->Trigger();
-
-			UE_LOG(LogTemp, Warning, TEXT("Even this code is excecuted"));
 		}
 	}
 			
