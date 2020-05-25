@@ -13,10 +13,6 @@ AStaticMeshTrigger::AStaticMeshTrigger()
 	// Create a mesh component
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
 	SetRootComponent(Mesh);
-
-	// Trigger default values
-	TriggerMovement = { 0.f, 0.f, -400.f };
-	TriggerMovementSpeed = 5.f;
 }
 
 void AStaticMeshTrigger::Trigger()
@@ -35,11 +31,11 @@ void AStaticMeshTrigger::BeginPlay()
 {
 	Super::BeginPlay();
 
-	float DeltaTime = GetWorld()->GetDeltaSeconds();
-
-	const FVector Location = GetActorLocation();
-	TriggerMovementTime = FMath::Abs(FVector::Distance(Location, Location + TriggerMovement)) / TriggerMovementSpeed;
-	TriggerMovementStep = TriggerMovement / TriggerMovementTime;
+	TriggerMovementStep = TriggerMovement / TriggerTime;
+	
+	TriggerRotationStep.Roll = TriggerRotation.Roll / TriggerTime;
+	TriggerRotationStep.Yaw = TriggerRotation.Yaw / TriggerTime;
+	TriggerRotationStep.Pitch = TriggerRotation.Pitch / TriggerTime;
 }
 
 // Called every frame
@@ -47,11 +43,12 @@ void AStaticMeshTrigger::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bTriggered && TriggerMovementTime > 0)
+	if (bTriggered && TriggerTime > 0)
 	{
-		TriggerMovementTime--;
+		TriggerTime--;
 		AddActorLocalOffset(TriggerMovementStep);
-		UE_LOG(LogTemp, Warning, TEXT("TriggerMovementTime: %i"), TriggerMovementTime);
+		AddActorLocalRotation(TriggerRotationStep);
+		UE_LOG(LogTemp, Warning, TEXT("TriggerTime: %i"), TriggerTime);
 	}
 }
 
