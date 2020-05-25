@@ -1,6 +1,6 @@
 #include "PlantPlatformV2.h"
 #include "Components/StaticMeshComponent.h"
-#include "RainCloud.h"
+#include "RainSpell.h"
 
 APlantPlatformV2::APlantPlatformV2()
 {
@@ -40,7 +40,7 @@ void APlantPlatformV2::BeginPlay()
 
 void APlantPlatformV2::RainBeginOverlap(AActor* OverlappingActor, AActor* OtherActor)
 {
-	if (GrowingPhase == EGrowingPhase::Idle && Cast<ARainCloud>(OtherActor))
+	if (GrowingPhase == EGrowingPhase::Idle && Cast<ARainSpell>(OtherActor))
 		AdvancePhase();
 }
 
@@ -48,7 +48,7 @@ void APlantPlatformV2::AdvancePhase()
 {
 	switch (GrowingPhase)
 	{
-	case EGrowingPhase::Idle: GrowingPhase = EGrowingPhase::TopPlant; UE_LOG(LogTemp, Warning, TEXT("FGFFF")) break;
+	case EGrowingPhase::Idle: GrowingPhase = EGrowingPhase::TopPlant; break;
 	case EGrowingPhase::TopPlant: GrowingPhase = EGrowingPhase::BottomPlant; break;
 	case EGrowingPhase::BottomPlant: GrowingPhase = EGrowingPhase::Grown; break;
 	}

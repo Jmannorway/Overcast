@@ -17,6 +17,8 @@ ATriggerTouch::ATriggerTouch()
 	TriggerComponent = CreateDefaultSubobject<UTriggerComponent>("TriggerComponent");
 
 	OnActorBeginOverlap.AddDynamic(this, &ATriggerTouch::Overlap);
+
+	CosmeticRotation = 120.f;
 }
 
 void ATriggerTouch::Overlap_Implementation(AActor* OverlappedActor, AActor* OtherActor)
@@ -36,6 +38,6 @@ void ATriggerTouch::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// Rotate in world
-	AddActorLocalRotation({ 0.f, 120.f * DeltaTime, 0.f });
+	AddActorLocalRotation({ 0.f, CosmeticRotation * DeltaTime, 0.f });
 }
 

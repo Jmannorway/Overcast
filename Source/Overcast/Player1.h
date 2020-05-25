@@ -7,6 +7,8 @@
 #include "Containers/Map.h"
 #include "Player1.generated.h"
 
+class ASpell;
+
 UENUM(BlueprintType)
 enum class EPlayerMovementState : uint8
 {
@@ -106,24 +108,50 @@ protected:
 		Spell related variables and functions
 	*/
 
-	// Configured rain cloud spell BP instance (will probably be replaced by a more intricate spellcasting system some day)
-	UPROPERTY(EditAnywhere, Category = "Spell")
-		TSubclassOf<class ARainCloud> RainSpellClass;
+	// Class of the rain spell instance to spawn
+	UPROPERTY(EditDefaultsOnly, Category = "Spell")
+		TSubclassOf<ASpell> RainSpellClass;
+
+	// Class of the wind spell instance to spawn
+	UPROPERTY(EditDefaultsOnly, Category = "Spell")
+		TSubclassOf<ASpell> WindSpellClass;
+
+	// Class of the shade spell instance to spawn
+	UPROPERTY(EditDefaultsOnly, Category = "Spell")
+		TSubclassOf<ASpell> ShadeSpellClass;
 
 	// Location offset for spells that create a specific object
 	UPROPERTY(EditAnywhere, Category = "Spell")
-		FVector SpellLocationOffset;
+		FVector SpellSpawnLocationOffset;
 
 	// How far ahead to of the player to spawn an instance created by a spell
 	UPROPERTY(EditAnywhere, Category = "Spell")
-		float SpellAheadOffset;
+		float SpellAheadSpawnOffset;
+
+	// Cool down time for a spell
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spell")
+		float SpellCooldown;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spell")
+		float SpellCooldownTimer;
+
+	// Spawn spell of class
+	UFUNCTION(BlueprintCallable, Category = "Spell")
+		ASpell* SpawnSpell(TSubclassOf<ASpell> SpellClass);
+
+	// Cast the selected spell
+	UFUNCTION(BlueprintCallable, Category = "Spell")
+		void CastSpell();
+
+	// Select the next spell
+	UFUNCTION(BlueprintCallable, Category = "Spell")
+		void NextSpell();
 
 	/*
 		Camera trigger reference to keep track
 	*/
 
 	class ACameraTrigger* CameraTrigger;
-
 
 private:
 
@@ -143,13 +171,9 @@ public:
 	//Called for side to side
 	void HorizontalMovement(float Value);
 
-	void Spell();
-
 	void Pause();
 
 	void Quit();
-
-	void NextSpell();
 
 	FORCEINLINE UCameraComponent* GetCameraComponent() const { return Camera; }
 	FORCEINLINE ULensmanSpringArmComponent* GetSpringArmComponent() const { return CameraArm; }

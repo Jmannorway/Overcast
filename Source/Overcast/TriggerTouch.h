@@ -26,6 +26,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TriggerTouch")
 		TSubclassOf<AActor> TriggeredBy;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TriggerTouch")
+		float CosmeticRotation;
+
 	UFUNCTION(BlueprintNativeEvent)
 		void Overlap(AActor* OverlappedActor, AActor* OtherActor);
 

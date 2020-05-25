@@ -9,9 +9,9 @@
 #include "AIController.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "RainCloud.h"
 #include "OvercastMainGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "RainSpell.h"
 
 // Sets default values
 APatrollingEnemy::APatrollingEnemy()
@@ -187,7 +187,7 @@ void APatrollingEnemy::OnVisionBoxEndOverlap(UPrimitiveComponent* OverlappedComp
 
 void APatrollingEnemy::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (Cast<ARainCloud>(OtherActor))
+	if (Cast<ARainSpell>(OtherActor))
 		SetStatus(EPatrollingEnemyStatus::Stunned);
 }
 

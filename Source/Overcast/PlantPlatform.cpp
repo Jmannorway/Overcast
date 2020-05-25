@@ -5,7 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SceneComponent.h"
-#include "RainCloud.h"
+#include "RainSpell.h"
 
 // Sets default values
 APlantPlatform::APlantPlatform()
@@ -50,7 +50,7 @@ void APlantPlatform::OnConstruction(const FTransform& Transform)
 
 void APlantPlatform::OnPlantBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (GrowthPhase == EGrowthPhase::Idle && Cast<ARainCloud>(OtherActor))
+	if (GrowthPhase == EGrowthPhase::Idle && Cast<ARainSpell>(OtherActor))
 	{
 		GrowthPhase = EGrowthPhase::Growing;
 

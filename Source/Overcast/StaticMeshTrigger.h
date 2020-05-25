@@ -33,7 +33,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
 		FRotator TriggerRotation;
 
-	// Translation duration in seconds
+	// Translation duration in frames
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
 		int32 TriggerTime;
 

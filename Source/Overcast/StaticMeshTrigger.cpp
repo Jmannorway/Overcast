@@ -13,6 +13,8 @@ AStaticMeshTrigger::AStaticMeshTrigger()
 	// Create a mesh component
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
 	SetRootComponent(Mesh);
+
+	TriggerTime = 60;
 }
 
 void AStaticMeshTrigger::Trigger()

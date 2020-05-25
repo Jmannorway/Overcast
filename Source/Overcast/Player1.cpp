@@ -6,7 +6,6 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "RainCloud.h"
 #include "GameFramework/Actor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
@@ -24,6 +23,7 @@
 #include "SpellSelector.h"
 #include "SpellScroll.h"
 #include "Components/CapsuleComponent.h"
+#include "Spell.h"
 
 #define ____DEFAULT_MOVEMENT_SPEED 600.f
 #define ____DEFAULT_SLIDE_SPEED 900.f
@@ -159,10 +159,48 @@ void APlayer1::DashButtonReleased()
 	}
 }
 
+ASpell* APlayer1::SpawnSpell(TSubclassOf<ASpell> SpellClass)
+{
+	const FRotator Rotation = GetActorRotation();
+
+	return GetWorld()->SpawnActor<ASpell>(
+		SpellClass,
+		GetActorLocation() + Rotation.Vector() * SpellAheadSpawnOffset + SpellSpawnLocationOffset,
+		Rotation
+		);
+}
+
+void APlayer1::NextSpell()
+{
+	SpellSelector->NextSpell();
+}
+
+// Spawn a raincloud with the desired offset
+void APlayer1::CastSpell()
+{
+	// Cast rain cloud spell with offset
+	switch (SpellSelector->GetSpellType())
+	{
+	case ESpellType::Rain:
+		SpawnSpell(RainSpellClass);
+		break;
+
+	case ESpellType::Wind:
+		// SpawnSpell(WindSpellClass);
+		break;
+
+	case ESpellType::Shade:
+		SpawnSpell(ShadeSpellClass);
+		break;
+	}
+}
+
 // Called every frame
 void APlayer1::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	
 
 	// Act as STATEd *maniacal laughter*
 	switch (PlayerMovementState)
@@ -204,7 +242,7 @@ void APlayer1::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	check(PlayerInputComponent);
 
 	// Set up key press function bindings
-	PlayerInputComponent->BindAction("Spell", IE_Pressed, this, &APlayer1::Spell);
+	PlayerInputComponent->BindAction("Spell", IE_Pressed, this, &APlayer1::CastSpell);
 	PlayerInputComponent->BindAction("NextSpell", IE_Pressed, this, &APlayer1::NextSpell);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
@@ -244,37 +282,6 @@ void APlayer1::HorizontalMovement(float Value)
 	}
 }
 
-// Spawn a raincloud with the desired offset
-void APlayer1::Spell()
-{
-	FRotator Direction = GetActorRotation();
-
-	// Cast rain cloud spell with offset
-	switch (SpellSelector->GetSpellType())
-	{
-	case ESpellType::Rain:
-		GetWorld()->SpawnActor<ARainCloud>(
-			RainSpellClass,
-			GetActorLocation() + Direction.Vector() * SpellAheadOffset + SpellLocationOffset,
-			Direction
-			);
-		break;
-
-	case ESpellType::Wind:
-		/*
-			Spawn wind spell here
-		*/
-		break;
-
-	case ESpellType::Shade:
-		/*
-			Spawn shade spell here
-		*/
-		break;
-	}
-	
-}
-
 void APlayer1::Pause()
 {
 	// Pause if able to cast to main game mode
@@ -286,9 +293,4 @@ void APlayer1::Quit()
 {
 	if (auto GameMode = Cast<AOvercastGameModeBase>(UGameplayStatics::GetGameMode(this)))
 		GameMode->QuitGame();
-}
-
-void APlayer1::NextSpell()
-{
-	SpellSelector->NextSpell();
 }
