@@ -22,12 +22,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Trigger")
 		int32 GetTriggerIndex() const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// Mesh component
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
-		class UTriggerMovementComponent* TriggerMovement;
+		UStaticMeshComponent* Mesh;
 
 	// How far in any direction to move when triggered
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
@@ -58,9 +60,5 @@ private:
 
 	UPROPERTY()
 		FRotator TriggerRotationStep;
-
-	// Mesh component
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
-		UStaticMeshComponent* Mesh;
 
 };
