@@ -23,26 +23,26 @@ public:
 	// Sets default values for this actor's properties
 	APlantPlatformV2();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant")
+		float TopPlantSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant")
+		float BottomPlantSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant")
+		float GrowthHeight;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	USceneComponent* DummyRoot;
 
-	UPROPERTY(EditAnywhere, Category = "Plant")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant")
 		UStaticMeshComponent* TopPlant;
 
-	UPROPERTY(EditAnywhere, Category = "Plant")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plant")
 		UStaticMeshComponent* BottomPlant;
-
-	UPROPERTY(EditAnywhere, Category = "Plant")
-		float TopPlantSpeed;
-
-	UPROPERTY(EditAnywhere, Category = "Plant")
-		float BottomPlantSpeed;
-
-	UPROPERTY(EditAnywhere, Category = "Plant")
-		float GrowthHeight;
 
 	EGrowingPhase GrowingPhase;
 	float GrowingProgress;

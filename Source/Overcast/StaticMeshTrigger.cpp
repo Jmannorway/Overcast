@@ -51,6 +51,9 @@ void AStaticMeshTrigger::Tick(float DeltaTime)
 		AddActorLocalOffset(TriggerMovementStep);
 		AddActorLocalRotation(TriggerRotationStep);
 		UE_LOG(LogTemp, Warning, TEXT("TriggerTime: %i"), TriggerTime);
+
+		if (TriggerTime > 0 && bDestroyAfterMoving)
+			Destroy();
 	}
 }
 

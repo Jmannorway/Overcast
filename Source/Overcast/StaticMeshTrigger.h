@@ -15,6 +15,8 @@ public:
 	// Sets default values for this actor's properties
 	AStaticMeshTrigger();
 
+	virtual void Tick(float DeltaTime) override;
+
 	UFUNCTION(BlueprintCallable, Category = "Trigger")
 		void Trigger();
 
@@ -24,6 +26,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	// Mesh component
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
+		UStaticMeshComponent* Mesh;
 
 	// How far in any direction to move when triggered
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
@@ -41,9 +47,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
 		int32 TriggerIndex;
 
-	// Mesh component
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
-		UStaticMeshComponent* Mesh;
+		bool bDestroyAfterMoving;
 
 private:
 
@@ -55,9 +60,5 @@ private:
 
 	UPROPERTY()
 		FRotator TriggerRotationStep;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 };
