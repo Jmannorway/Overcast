@@ -62,5 +62,5 @@ private:
 	// Mesh component
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger")
 		UStaticMeshComponent* Mesh;
-z
+
 };
