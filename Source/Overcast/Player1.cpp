@@ -135,6 +135,10 @@ void APlayer1::SetPlayerMovementState(EPlayerMovementState NewState)
 		DashTimer = 0.f;
 		GetCharacterMovement()->MaxWalkSpeed = DashSpeed;
 		break;
+
+	case EPlayerMovementState::Dead:
+		GetCharacterMovement()->MaxWalkSpeed = 0.f;
+		break;
 	}
 
 	PlayerMovementState = NewState;

@@ -14,6 +14,7 @@ enum class EPlayerMovementState : uint8
 {
 	Normal,
 	Dashing,
+	Dead,
 	NUMBER
 };
 
@@ -71,12 +72,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 		EPlayerMovementState PlayerMovementState;
 
-	UFUNCTION()
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "State")
 		void SetPlayerMovementState(EPlayerMovementState NewState);
 
-public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 		EPlayerMovementState GetPlayerMovementState() const;
+
 protected:
 
 	/*
