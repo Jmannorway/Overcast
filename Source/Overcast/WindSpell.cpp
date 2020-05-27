@@ -21,13 +21,6 @@ AWindSpell::AWindSpell()
 	WindArea->SetupAttachment(RootComponent);
 }
 
-// Called when the game starts or when spawned
-void AWindSpell::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 // Called every frame
 void AWindSpell::Tick(float DeltaTime)
 {

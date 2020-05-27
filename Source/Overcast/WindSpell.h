@@ -7,7 +7,7 @@
 #include "WindSpell.generated.h"
 
 UCLASS()
-class OVERCAST_API AWindSpell : public AActor
+class OVERCAST_API AWindSpell : public ASpell
 {
 	GENERATED_BODY()
 	
@@ -16,8 +16,6 @@ public:
 	AWindSpell();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, Category = "Wind Spell")
 		class UStaticMeshComponent* WindMesh;
