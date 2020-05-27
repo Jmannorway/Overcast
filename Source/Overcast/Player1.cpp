@@ -170,7 +170,7 @@ ASpell* APlayer1::SpawnSpell(TSubclassOf<ASpell> SpellClass)
 
 	return GetWorld()->SpawnActor<ASpell>(
 		SpellClass,
-		GetActorLocation() + Rotation.Vector() * SpellAheadSpawnOffset + SpellSpawnLocationOffset,
+		GetActorLocation() + GetActorForwardVector() * SpellAheadSpawnOffset + SpellSpawnLocationOffset,
 		Rotation
 		);
 }

@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Rain Spell")
 		class UParticleSystemComponent* CloudParticles;
 
+	UPROPERTY(EditAnywhere, Category = "Rain Spell")
+		UStaticMeshComponent* CloudMesh;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

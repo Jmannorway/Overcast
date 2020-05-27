@@ -4,6 +4,7 @@
 #include "RainSpell.h"
 #include "Components/BoxComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 // Sets default values
 ARainSpell::ARainSpell()
@@ -21,6 +22,8 @@ ARainSpell::ARainSpell()
 	RainArea->InitBoxExtent({ 1.f, 60.f, 300.f });
 	RainArea->SetupAttachment(RootComponent);
 
+	CloudMesh = CreateDefaultSubobject<UStaticMeshComponent>("CloudMesh");
+	CloudMesh->SetupAttachment(RootComponent);
 }
 
 // Called every frame
@@ -36,4 +39,5 @@ void ARainSpell::Tick(float DeltaTime)
 	// Offset wet area and particles
 	RainArea->AddRelativeLocation({ CloudSpeed, 0.f, 0.f });
 	CloudParticles->AddRelativeLocation({ CloudSpeed, 0.f, 0.f });
+	CloudMesh->AddRelativeLocation({ CloudSpeed, 0.f, 0.f });
 }
