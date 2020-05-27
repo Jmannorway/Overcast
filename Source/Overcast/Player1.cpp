@@ -191,7 +191,7 @@ void APlayer1::CastSpell()
 		break;
 
 	case ESpellType::Wind:
-		// SpawnSpell(WindSpellClass);
+		 SpawnSpell(WindSpellClass);
 		break;
 
 	case ESpellType::Shade:

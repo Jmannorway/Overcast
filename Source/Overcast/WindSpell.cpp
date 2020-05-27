@@ -17,15 +17,8 @@ AWindSpell::AWindSpell()
 	WindMesh->SetupAttachment(RootComponent);
 
 	WindArea = CreateDefaultSubobject<UBoxComponent>("Wind hitbox");
-	WindArea->InitBoxExtent({ 35.f, 100.f, 100.f });
+	WindArea->InitBoxExtent({ 35.f, 150.f, 150.f });
 	WindArea->SetupAttachment(RootComponent);
-}
-
-// Called when the game starts or when spawned
-void AWindSpell::BeginPlay()
-{
-	Super::BeginPlay();
-	
 }
 
 // Called every frame
