@@ -143,39 +143,34 @@ float APatrollingEnemy::DistanceToTarget(AActor* Target) const
 
 void APatrollingEnemy::OnVisionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (Status != EPatrollingEnemyStatus::Stunned)
+	if (Status != EPatrollingEnemyStatus::Stunned && OtherActor == UGameplayStatics::GetPlayerPawn(this, 0))
 	{
-		APlayer1* Player = Cast<APlayer1>(OtherActor);
+		// Get information about the fastest AI path to the player
+		FAIMoveRequest Request;
+		GenerateEnemyMoveRequest(Request, OtherActor);
 
-		if (Player)
+		FPathFindingQuery Query;
+		AIController->BuildPathfindingQuery(Request, Query);
+
+		FNavPathSharedPtr Path;
+		AIController->FindPathForMoveRequest(Request, Query, Path);
+
+		// Chase player if nav path points are less than three
+		if (Path && Path->GetPathPoints().Num() < 3)
 		{
-			// Get information about the fastest AI path to the player
-			FAIMoveRequest Request;
-			GenerateEnemyMoveRequest(Request, OtherActor);
-
-			FPathFindingQuery Query;
-			AIController->BuildPathfindingQuery(Request, Query);
-
-			FNavPathSharedPtr Path;
-			AIController->FindPathForMoveRequest(Request, Query, Path);
-
-			// Chase player if nav path points are less than three
-			if (Path && Path->GetPathPoints().Num() < 3)
+			if (Status == EPatrollingEnemyStatus::Patrolling)
 			{
-				if (Status == EPatrollingEnemyStatus::Patrolling)
-				{
-					AIController->MoveTo(Request);
-					Status = EPatrollingEnemyStatus::Hunting;
-					UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
-					CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
+				AIController->MoveTo(Request);
+				Status = EPatrollingEnemyStatus::Hunting;
+				UE_LOG(LogTemp, Warning, TEXT("Patrolling enemy: status = hunting, chasing player actor"));
+				CurrentPathAnchor = PatrolPath->GetPreviousAnchorIndex(CurrentPathAnchor);
 
-					GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
-				}
-
-				StateTimer = 0.f;
-				bTargetInView = true;
-				TargetActor = OtherActor;
+				GetCharacterMovement()->MaxWalkSpeed = HuntingMovementSpeed;
 			}
+
+			StateTimer = 0.f;
+			bTargetInView = true;
+			TargetActor = OtherActor;
 		}
 	}
 }

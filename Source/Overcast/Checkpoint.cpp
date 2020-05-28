@@ -6,7 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/BillboardComponent.h"
 #include "Components/ArrowComponent.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "OvercastMainGameMode.h"
 
 // Sets default values
@@ -18,8 +18,8 @@ ACheckpoint::ACheckpoint()
 	OffsetComponent = CreateDefaultSubobject<USceneComponent>("OffsetComponent");
 	SetRootComponent(OffsetComponent);
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Ghost");
-	Mesh->SetupAttachment(RootComponent);
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Ghost");
+	SkeletalMesh->SetupAttachment(RootComponent);
 
 	Box = CreateDefaultSubobject<UBoxComponent>("Box");
 	Box->InitBoxExtent({ 200.f, 200.f, 200.f });
@@ -71,12 +71,13 @@ FRotator ACheckpoint::GetSpawnRotation() const
 
 void ACheckpoint::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor == (void*)UGameplayStatics::GetPlayerCharacter(this, 0))
+	if (OtherActor == UGameplayStatics::GetPlayerPawn(this, 0))
 	{
 		if (auto GameMode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
 		{
 			//GameMode->SetCheckpointIndex(CheckpointIndex);
 			UE_LOG(LogTemp, Warning, TEXT("Set checkpoint"));
+			bIsTalking = true;
 		}
 	}
 }

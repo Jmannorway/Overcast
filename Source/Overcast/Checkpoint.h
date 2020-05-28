@@ -25,7 +25,7 @@ protected:
 		USceneComponent* OffsetComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Checkpoint")
-		UStaticMeshComponent* Mesh;
+		class USkeletalMeshComponent* SkeletalMesh;
 
 	UPROPERTY(EditAnywhere, Category = "Checkpoint")
 		class UBoxComponent* Box;
@@ -35,6 +35,9 @@ protected:
 
 	UPROPERTY()
 		class UArrowComponent* Arrow;
+
+	UPROPERTY()
+		bool bIsTalking;
 
 
 	UPROPERTY(EditAnywhere, Category = "Checkpoint")
