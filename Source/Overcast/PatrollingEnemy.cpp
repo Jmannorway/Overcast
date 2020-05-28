@@ -132,7 +132,7 @@ void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& OutMoveRequest, 
 
 void APatrollingEnemy::GenerateEnemyMoveRequest(FAIMoveRequest& OutMoveRequest, AActor* Target) const
 {
-	OutMoveRequest.SetAcceptanceRadius(AttackRadii.Acceptance);
+	OutMoveRequest.SetAcceptanceRadius(PatrolAcceptanceRadius);
 	OutMoveRequest.SetGoalActor(Target);
 }
 
@@ -300,15 +300,15 @@ void APatrollingEnemy::Tick(float DeltaTime)
 
 			StateTimer += DeltaTime;
 
-			// The attack landed, load the game
-			if (StateTimer >= Time.Attack)
+			// The attack landed, kill the player or load the game
+			if (StateTimer >= Time.Attack / 2.f)
 			{
-				if (auto GameMode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("You are dead boi"));
+				if (auto Player = Cast<APlayer1>(TargetActor))
+					Player->SetPlayerMovementState(EPlayerMovementState::Dead);
+				else if (auto GameMode = Cast<AOvercastMainGameMode>(UGameplayStatics::GetGameMode(this)))
 					GameMode->LoadGame();
-					SetStatus(EPatrollingEnemyStatus::Patrolling);
-				}
+					
+				SetStatus(EPatrollingEnemyStatus::Patrolling);
 			}
 			else if (AIController->GetMoveStatus() == EPathFollowingStatus::Idle)
 			{

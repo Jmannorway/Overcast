@@ -105,12 +105,16 @@ bool AOvercastMainGameMode::TogglePause()
 	{
 		RemoveWidget();
 		UGameplayStatics::SetGamePaused(this, false);
+		UGameplayStatics::GetPlayerController(this, 0)->bShowMouseCursor = false;
+		UGameplayStatics::GetPlayerController(this, 0)->SetInputMode(FInputModeGameAndUI());
 		return false;
 	}
 	else
 	{
 		SetWidget(PauseWidgetClass);
 		UGameplayStatics::SetGamePaused(this, true);
+		UGameplayStatics::GetPlayerController(this, 0)->bShowMouseCursor = true;
+		UGameplayStatics::GetPlayerController(this, 0)->SetInputMode(FInputModeUIOnly());
 		return true;
 	}
 }
