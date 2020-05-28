@@ -323,8 +323,6 @@ void APatrollingEnemy::Tick(float DeltaTime)
 		{
 			if (bTargetInView)
 				SetStatus(EPatrollingEnemyStatus::Hunting);
-			else
-				SetStatus(EPatrollingEnemyStatus::Wait);
 		}
 		break;
 
