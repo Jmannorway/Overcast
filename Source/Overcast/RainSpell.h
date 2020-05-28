@@ -30,7 +30,9 @@ protected:
 		class UParticleSystemComponent* CloudParticles;
 
 	UPROPERTY(EditAnywhere, Category = "Rain Spell")
-		UStaticMeshComponent* CloudMesh;
+		class UStaticMeshComponent* CloudMesh;
+
+
 
 public:
 	// Called every frame

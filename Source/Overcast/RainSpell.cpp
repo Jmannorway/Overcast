@@ -18,12 +18,15 @@ ARainSpell::ARainSpell()
 	CloudParticles = CreateDefaultSubobject<UParticleSystemComponent>("CloudParticles");
 	CloudParticles->SetupAttachment(RootComponent);
 
+	CloudMesh = CreateDefaultSubobject<UStaticMeshComponent>("CloudMesh");
+	CloudMesh->SetRelativeLocation(FVector(0.f, 0.f, 300.f));
+	CloudMesh->SetupAttachment(RootComponent);
+
 	RainArea = CreateDefaultSubobject<UBoxComponent>("Wet Area");
 	RainArea->InitBoxExtent({ 1.f, 60.f, 300.f });
 	RainArea->SetupAttachment(RootComponent);
 
-	CloudMesh = CreateDefaultSubobject<UStaticMeshComponent>("CloudMesh");
-	CloudMesh->SetupAttachment(RootComponent);
+
 }
 
 // Called every frame
