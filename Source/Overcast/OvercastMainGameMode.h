@@ -40,6 +40,9 @@ public:
 		bool SaveGame();
 
 	UFUNCTION(BlueprintCallable, Category = "File Handling")
+		void SaveGameLevelCheckpoint(FName LevelName, int32 CheckpointIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "File Handling")
 		bool LoadGame();
 
 	UFUNCTION(BlueprintCallable, Category = "File Handling")

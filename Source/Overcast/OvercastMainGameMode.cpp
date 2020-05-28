@@ -31,12 +31,12 @@ void AOvercastMainGameMode::BeginPlay()
 	{
 		OvercastSaveGame = CreateNewGameSave();
 		bSaveGameIsValid = true;
-		UE_LOG(LogTemp, Warning, TEXT("ReadGame failed in BeginPlay created a new save game"))
+		UE_LOG(LogTemp, Warning, TEXT("ReadGame failed in BeginPlay created a new save game"));
 
-			if (!WriteGame())
-				UE_LOG(LogTemp, Warning, TEXT("WriteGame succeeded"))
-			else
-				UE_LOG(LogTemp, Warning, TEXT("WriteGame failed in BeginPlay trying to save the new game save"))
+		if (!WriteGame())
+			UE_LOG(LogTemp, Warning, TEXT("WriteGame succeeded"))
+		else
+			UE_LOG(LogTemp, Warning, TEXT("WriteGame failed in BeginPlay trying to save the new game save"))
 	}
 	else
 	{
@@ -135,6 +135,19 @@ bool AOvercastMainGameMode::SaveGame()
 		return false;
 
 	return true;
+}
+
+void AOvercastMainGameMode::SaveGameLevelCheckpoint(FName LevelName, int32 CheckpointIndex)
+{
+	if (!bSaveGameIsValid)
+		OvercastSaveGame = CreateNewGameSave();
+
+	OvercastSaveGame->SaveLevelName = LevelName;
+	OvercastSaveGame->SaveCheckpointIndex = CheckpointIndex;
+
+	// Save values if the player exists
+	if (auto Player = Cast<APlayer1>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		OvercastSaveGame->SaveUnlockedSpells = Player->SpellSelector->GetUnlockedSpells();
 }
 
 bool AOvercastMainGameMode::LoadGame()

@@ -30,7 +30,7 @@ public:
 	APlayer1();
 
 	// The spell selector is public to allow for easy editing
-	UPROPERTY(EditAnywhere, Category = "Spell")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spell")
 		USpellSelector* SpellSelector;
 
 protected:
