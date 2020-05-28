@@ -106,6 +106,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Overcast")
 		float AutoRespawnTimer;
 
+	// Whether or not to destroy the player when respawning
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+		bool bDestroyWhenRespawning;
+
 	// Functions used to find locations to respawn in
 	UFUNCTION(BlueprintCallable, Category = "Overcast")
 		FVector FindCheckpointSpawnLocation(int32 CheckpointIndex);

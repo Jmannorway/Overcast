@@ -27,22 +27,24 @@ AOvercastMainGameMode::AOvercastMainGameMode()
 
 void AOvercastMainGameMode::BeginPlay()
 {
-	if (bAutoLoadGame)
+	if (!ReadGame())
 	{
-		if (!ReadGame())
-		{
-			OvercastSaveGame = CreateNewGameSave();
-			bSaveGameIsValid = true;
-			UE_LOG(LogTemp, Warning, TEXT("ReadGame failed in BeginPlay created a new save game"))
+		OvercastSaveGame = CreateNewGameSave();
+		bSaveGameIsValid = true;
+		UE_LOG(LogTemp, Warning, TEXT("ReadGame failed in BeginPlay created a new save game"))
 
 			if (!WriteGame())
 				UE_LOG(LogTemp, Warning, TEXT("WriteGame succeeded"))
 			else
 				UE_LOG(LogTemp, Warning, TEXT("WriteGame failed in BeginPlay trying to save the new game save"))
-		}
-		else
-			UE_LOG(LogTemp, Warning, TEXT("ReadGame succeeded!"))
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ReadGame succeeded!"))
+	}
 
+	if (bAutoLoadGame)
+	{
 		if (!LoadGame())
 			UE_LOG(LogTemp, Warning, TEXT("LoadGame failed in BeginPlay"))
 		else
@@ -72,7 +74,7 @@ void AOvercastMainGameMode::Tick(float DeltaTime)
 			UE_LOG(LogTemp, Warning, TEXT("Auto Respawn Timer: %f"), AutoRespawnTimer);
 
 			if (AutoRespawnTimer >= AutoRespawnDelay)
-				Respawn(false);
+				Respawn(bDestroyWhenRespawning);
 		}
 		else
 		{
@@ -142,7 +144,7 @@ bool AOvercastMainGameMode::LoadGame()
 		if (*UGameplayStatics::GetCurrentLevelName(this) == OvercastSaveGame->SaveLevelName)
 		{
 			// Spawn the player
-			Respawn(false);
+			Respawn(bDestroyWhenRespawning);
 		}
 		else
 		{
