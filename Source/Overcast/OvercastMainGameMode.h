@@ -24,6 +24,8 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason);
 
+	virtual void Tick(float DeltaTime) override;
+
 	/*
 		File handling functions for overcast
 		SaveGame and LoadGame should be used in blueprint by various game
@@ -89,8 +91,20 @@ protected:
 		TSubclassOf<class ASpellScroll> SpellScrollClass;
 
 	/*
-		Functions for spawning/respawning the player
+		Functions & variables for spawning/respawning the player
 	*/
+
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+		bool bAutoRespawn;
+
+	// Time in seconds before an automatic respawn
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
+		float AutoRespawnDelay;
+
+	// Timer to keep track of automatic respawning
+	UPROPERTY(BlueprintReadOnly, Category = "Overcast")
+		float AutoRespawnTimer;
 
 	// Functions used to find locations to respawn in
 	UFUNCTION(BlueprintCallable, Category = "Overcast")

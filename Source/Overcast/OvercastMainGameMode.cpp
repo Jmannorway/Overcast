@@ -14,7 +14,16 @@
 #include "SpellScroll.h"
 
 // This might be insanely unsafe, idk??? Undefined behavior? Hopefully not lol
-AOvercastMainGameMode::AOvercastMainGameMode() { ; }
+AOvercastMainGameMode::AOvercastMainGameMode()
+{ 
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	// Auto respawn variable defaults
+	bAutoRespawn = true;
+	AutoRespawnDelay = 2.f;
+	AutoRespawnTimer = 0.f;
+}
 
 void AOvercastMainGameMode::BeginPlay()
 {
@@ -47,6 +56,29 @@ void AOvercastMainGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		UE_LOG(LogTemp, Warning, TEXT("WriteGame failed in EndPlay"))
 	else
 		UE_LOG(LogTemp, Warning, TEXT("WriteGame succeeded!"))
+}
+
+void AOvercastMainGameMode::Tick(float DeltaTime)
+{
+	// Automatically respawn if player if dead or doesn't exist
+	if (bAutoRespawn)
+	{
+		auto Player = Cast<APlayer1>(UGameplayStatics::GetPlayerPawn(this, 0));
+
+		if (!Player || Player->GetPlayerMovementState() == EPlayerMovementState::Dead)
+		{
+			AutoRespawnTimer += DeltaTime;
+
+			UE_LOG(LogTemp, Warning, TEXT("Auto Respawn Timer: %f"), AutoRespawnTimer);
+
+			if (AutoRespawnTimer >= AutoRespawnDelay)
+				Respawn(false);
+		}
+		else
+		{
+			AutoRespawnTimer = 0.f;
+		}
+	}
 }
 
 void AOvercastMainGameMode::ReturnToMenu()
@@ -185,7 +217,10 @@ void AOvercastMainGameMode::Respawn(bool bDestroyPlayer)
 	}
 
 	if (Player)
+	{
 		UGameplayStatics::GetPlayerController(this, 0)->Possess(Player);
+		Player->SetPlayerMovementState(EPlayerMovementState::Normal);
+	}
 }
 
 FVector AOvercastMainGameMode::FindCheckpointSpawnLocation(int32 CheckpointIndex)
