@@ -197,16 +197,18 @@ FVector AOvercastMainGameMode::FindCheckpointSpawnLocation(int32 CheckpointIndex
 	bool bCorrectCheckpoint = false;
 	ACheckpoint* CastCheckpoint;
 
-	for (int32 i = Checkpoint.Num() - 1; i >= 0; i--)
+	for(auto i : Checkpoint)
 	{
-		CastCheckpoint = CastChecked<ACheckpoint>(Checkpoint[i]);
+		CastCheckpoint = CastChecked<ACheckpoint>(i);
 
 		if (CastCheckpoint->GetCheckpointIndex() == CheckpointIndex)
 		{
 			return CastCheckpoint->GetSpawnLocation();
+			UE_LOG(LogTemp, Warning, TEXT("Got spawn location"));
 		}
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("Didn't get spawn location"));
 	return FVector::ZeroVector;
 }
 

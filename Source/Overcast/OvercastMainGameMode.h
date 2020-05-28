@@ -79,13 +79,13 @@ protected:
 		Various classes
 	*/
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Overcast")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
 		TSubclassOf<class UUserWidget> PauseWidgetClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Overcast")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
 		TSubclassOf<class ACheckpoint> CheckpointClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Overcast")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Overcast")
 		TSubclassOf<class ASpellScroll> SpellScrollClass;
 
 	/*
