@@ -73,7 +73,6 @@ APlayer1::APlayer1()
 	SpellSelector = CreateDefaultSubobject<USpellSelector>("SpellSelector");
 	SpellSelector->UnlockSpell(ESpellType::Rain);
 	SpellSelector->UnlockSpell(ESpellType::Wind);
-	SpellSelector->UnlockSpell(ESpellType::Shade);
 
 
 	// Dash variables

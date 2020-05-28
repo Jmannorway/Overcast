@@ -21,6 +21,7 @@ UOvercastSaveGame* AOvercastGameModeBase::CreateNewGameSave() const
 	SaveGame->SaveCheckpointIndex = -1;
 	SaveGame->SaveLevelName = GameInstance->GetFirstLevelName();
 	SaveGame->SaveUnlockedSpells = USpellSelector::GetDefaultUnlockedSpells();
+	SaveGame->SaveUnlockedSpells[1] = true;
 
 	return SaveGame;
 }
