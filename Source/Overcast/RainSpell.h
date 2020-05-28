@@ -32,6 +32,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Rain Spell")
 		class UStaticMeshComponent* CloudMesh;
 
+
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

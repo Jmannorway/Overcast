@@ -26,6 +26,8 @@ ARainSpell::ARainSpell()
 	RainArea->InitBoxExtent({ 1.f, 60.f, 300.f });
 	RainArea->SetupAttachment(RootComponent);
 
+	CloudMesh = CreateDefaultSubobject<UStaticMeshComponent>("CloudMesh");
+	CloudMesh->SetupAttachment(RootComponent);
 }
 
 // Called every frame
