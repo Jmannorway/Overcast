@@ -31,7 +31,7 @@ void APath::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	VisualizePath(PathColor, PathOffset, PathOffsetDirection);
+	//VisualizePath(PathColor, PathOffset, PathOffsetDirection);
 }
 
 // Called when the game starts or when spawned
