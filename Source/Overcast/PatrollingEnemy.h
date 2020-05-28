@@ -123,7 +123,7 @@ protected:
 		FPatrollingEnemyAttackRadii AttackRadii;
 
 	// Collision box used for vision
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = "Patrol")
 		class UBoxComponent* VisionBox;
 
 	// Returns the distance to the targeted actor
