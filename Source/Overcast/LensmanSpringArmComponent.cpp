@@ -88,8 +88,6 @@ void ULensmanSpringArmComponent::TickComponent(float DeltaTime, ELevelTick TickT
 		TargetOffset = FMath::Lerp(PreviousShot.Offset, NextShot.Offset, ShotCurveValue);
 		SetRelativeRotation(FMath::Lerp(PreviousShot.Rotation, NextShot.Rotation, ShotCurveValue));
 
-		UE_LOG(LogTemp, Warning, TEXT("%f"), ShotCurveValue);
-
 		if (CurrentShotTime == NextShot.Duration)
 		{
 			PreviousShot = NextShot;

@@ -110,7 +110,7 @@ void APlayer1::CapsuleComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 
 void APlayer1::CapsuleComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (CameraTrigger)
+	if (CameraTrigger == OtherActor)
 	{
 		ECameraTriggerReaction Reaction = CameraTrigger->GetOutsideReaction();
 
